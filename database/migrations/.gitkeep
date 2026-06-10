@@ -1,0 +1,2 @@
+# PRISM Database Migrations (Alembic)
+# Initialize with: alembic init database/migrations

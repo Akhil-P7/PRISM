@@ -1,0 +1,145 @@
+[tool.poetry]
+name = "prism"
+version = "0.1.0"
+description = "PRISM — Pediatric Respiratory Intelligence System. A modular AI platform for respiratory sound analysis, temporal intelligence, and retrieval-augmented clinical insight generation."
+authors = ["PRISM Team"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/prism-team/prism"
+keywords = ["respiratory", "ai", "pediatric", "cough-detection", "temporal-intelligence"]
+
+packages = [
+    { include = "backend" },
+    { include = "models" },
+    { include = "retrieval" },
+    { include = "pipelines" },
+    { include = "database" },
+    { include = "evaluation" },
+    { include = "datasets", from = "." },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11,<3.14"
+
+# --- Backend ---
+fastapi = "^0.115.0"
+uvicorn = { extras = ["standard"], version = "^0.34.0" }
+pydantic = "^2.10.0"
+pydantic-settings = "^2.7.0"
+python-dotenv = "^1.0.0"
+python-multipart = "^0.0.18"
+
+# --- Database (PostgreSQL) ---
+sqlalchemy = "^2.0.36"
+alembic = "^1.14.0"
+psycopg2-binary = "^2.9.10"
+asyncpg = "^0.30.0"
+
+# --- Machine Learning ---
+torch = "^2.5.0"
+torchaudio = "^2.5.0"
+torchvision = "^0.20.0"
+
+# --- Audio Processing ---
+librosa = "^0.10.2"
+soundfile = "^0.12.1"
+
+# --- Data Science ---
+numpy = "^1.26.0"
+pandas = "^2.2.0"
+scipy = "^1.14.0"
+scikit-learn = "^1.6.0"
+
+# --- Vector Store ---
+faiss-cpu = "^1.9.0"
+
+# --- Visualization / Frontend (Phase 1) ---
+streamlit = "^1.41.0"
+plotly = "^5.24.0"
+matplotlib = "^3.9.0"
+
+# --- Utilities ---
+pyyaml = "^6.0.2"
+tqdm = "^4.67.0"
+loguru = "^0.7.3"
+rich = "^13.9.0"
+httpx = "^0.28.0"
+
+[tool.poetry.group.dev.dependencies]
+# --- Code Quality ---
+black = "^24.10.0"
+isort = "^5.13.0"
+ruff = "^0.8.0"
+mypy = "^1.13.0"
+
+# --- Testing ---
+pytest = "^8.3.0"
+pytest-cov = "^6.0.0"
+pytest-asyncio = "^0.24.0"
+
+# --- Pre-commit ---
+pre-commit = "^4.0.0"
+
+# --- Jupyter ---
+jupyter = "^1.1.0"
+ipykernel = "^6.29.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# ===========================
+# Tool Configuration
+# ===========================
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["backend", "models", "retrieval", "pipelines", "database", "evaluation"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # line too long (handled by black)
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "pipeline: Pipeline end-to-end tests",
+    "api: API endpoint tests",
+    "slow: Slow-running tests",
+]

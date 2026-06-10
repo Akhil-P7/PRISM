@@ -1,0 +1,29 @@
+# ===========================
+# PRISM — Retrieval Configuration
+# ===========================
+
+# ---- FAISS Vector Store ----
+vector_store:
+  index_path: "./vector_store"
+  index_type: "IVFFlat"  # IVFFlat, Flat, HNSW
+  embedding_dimension: 512
+  similarity_metric: "cosine"  # cosine, l2, inner_product
+  nprobe: 10  # number of clusters to search
+
+# ---- Retrieval Engine ----
+retrieval:
+  top_k: 5                    # number of similar cases to retrieve
+  min_similarity_score: 0.7   # minimum cosine similarity threshold
+  max_results: 10
+
+# ---- Memory Builder ----
+memory:
+  summary_max_length: 512     # max characters for memory summaries
+  include_environmental: true
+  include_temporal: true
+
+# ---- Insight Generation ----
+insight_generator:
+  template_based: true        # Use template-based generation (Phase 1)
+  llm_based: false            # Enable LLM-based generation (Phase 2)
+  max_insight_length: 1024

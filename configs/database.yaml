@@ -1,0 +1,37 @@
+# ===========================
+# PRISM — Database Configuration
+# PostgreSQL is used across all environments
+# ===========================
+
+development:
+  driver: postgresql
+  host: localhost
+  port: 5432
+  database: prism_dev
+  user: prism
+  password: prism_secret
+  pool_size: 5
+  max_overflow: 5
+  echo: true
+
+production:
+  driver: postgresql
+  host: localhost
+  port: 5432
+  database: prism
+  user: prism
+  password: ${POSTGRES_PASSWORD}
+  pool_size: 20
+  max_overflow: 10
+  echo: false
+
+test:
+  driver: postgresql
+  host: localhost
+  port: 5432
+  database: prism_test
+  user: prism
+  password: prism_secret
+  pool_size: 5
+  max_overflow: 3
+  echo: false
