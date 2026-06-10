@@ -1,0 +1,116 @@
+# ===========================
+# PRISM — .gitignore
+# Pediatric Respiratory Intelligence System
+# ===========================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ---- Virtual Environments ----
+.venv/
+venv/
+ENV/
+env/
+
+# ---- Poetry ----
+# Do NOT ignore poetry.lock — it must be committed for reproducible builds
+# poetry.lock
+
+# ---- Environment Variables ----
+.env
+.env.local
+.env.*.local
+
+# ---- IDE & Editors ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ---- Jupyter Notebooks ----
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ---- PyTorch & ML Artifacts ----
+*.pt
+*.pth
+*.onnx
+*.ckpt
+checkpoints/
+runs/
+wandb/
+mlruns/
+lightning_logs/
+
+# ---- Audio / Dataset Files ----
+# Raw and processed datasets should NOT be committed
+datasets/raw/
+datasets/processed/
+datasets/features/
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.webm
+
+# ---- Spectrogram & Feature Caches ----
+*.npy
+*.npz
+*.h5
+*.hdf5
+
+# ---- FAISS Vector Store ----
+vector_store/
+*.faiss
+*.index
+
+# ---- Database ----
+*.db
+*.sqlite3
+
+# ---- Docker ----
+.docker/
+
+# ---- Coverage & Testing ----
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Logs ----
+logs/
+*.log
+
+# ---- Distribution / Build ----
+*.tar.gz
+*.zip
+
+# ---- Secrets & Credentials ----
+*.pem
+*.key
+*.crt
+credentials/

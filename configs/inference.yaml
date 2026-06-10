@@ -1,0 +1,28 @@
+# ===========================
+# PRISM — Inference Configuration
+# ===========================
+
+# ---- Cough Detection ----
+cough_detector:
+  checkpoint: "./models/checkpoints/cough_detector_best.pt"
+  threshold: 0.5
+  batch_size: 64
+  device: "auto"
+
+# ---- Temporal Analysis ----
+temporal_transformer:
+  checkpoint: "./models/checkpoints/temporal_transformer_best.pt"
+  window_size: 30  # days
+  device: "auto"
+
+# ---- Audio Processing ----
+audio:
+  sample_rate: 44100
+  segment_duration: 3.0
+  overlap: 0.5
+
+# ---- Spectrogram ----
+spectrogram:
+  n_mels: 128
+  n_fft: 2048
+  hop_length: 512
