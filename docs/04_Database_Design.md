@@ -172,7 +172,7 @@ Store structured information.
 
 Technology:
 
-* FAISS
+* TurboVec (Google's TurboQuant)
 
 Purpose:
 

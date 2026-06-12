@@ -530,7 +530,7 @@ Stores:
 
 ## Vector Search
 
-* FAISS
+* TurboVec (powered by Google's TurboQuant)
 
 ---
 

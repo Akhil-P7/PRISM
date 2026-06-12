@@ -48,6 +48,35 @@ The actual audio files linked to a subject.
 
 ---
 
+### Detailed Data Model Specification
+
+The unified PostgreSQL schema consists of three core tables, each backed by a SQLAlchemy model in `database/models`.
+
+| Table | SQLAlchemy Model | Primary Key | Foreign Keys | Core Fields | Description |
+|-------|------------------|-------------|--------------|------------|-------------|
+| `datasets` | `Dataset` | `id` (UUID) | — | `name`, `version`, `description` | Captures provenance of each source dataset (COUGHVID, Coswara, ICBHI). |
+| `subjects` | `Subject` | `id` (UUID) | `dataset_id` → `datasets.id` | `source_subject_id`, `age`, `gender`, `respiratory_condition`, `has_fever`, `is_smoker` | One row per participant; demographics are normalized across datasets. |
+| `recordings` | `Recording` | `id` (UUID) | `subject_id` → `subjects.id` | `file_path`, `duration`, `equipment`, `is_cough` | Points to an audio file (stored on disk) and its basic acoustic metadata. |
+
+**Field details**:
+- `source_subject_id` retains the original identifier from the source (e.g., Coswara's `vK2bLRNz...`). It is **not** unique globally because different datasets may reuse IDs; uniqueness is enforced together with `dataset_id`.
+- `age` is stored as an integer (years) and may be `NULL` when the source does not provide it (ICBHI).
+- `gender` is a short string; values are normalised to `Male`, `Female`, or `Other`.
+- `respiratory_condition` captures the clinical label (e.g., `Healthy`, `COVID-19`, `Symptomatic`).
+- `has_fever` and `is_smoker` are booleans, defaulting to `NULL` when unavailable.
+- `duration` records the length of the audio clip in seconds; it is optional because some source metadata omit it.
+- `equipment` records the capture device (e.g., `Smartphone`, `WelchAllyn Meditron`).
+- `is_cough` is a boolean flag indicating whether the clip contains a cough sound; for non‑cough datasets (ICBHI) it is set to `FALSE`.
+
+### Model ↔ Table Mapping
+- **`database/models/dataset.py`** defines class `Dataset` with columns matching the `datasets` table.
+- **`database/models/subject.py`** defines class `Subject` with a many‑to‑one relationship to `Dataset` via `dataset_id`.
+- **`database/models/recording.py`** defines class `Recording` with a many‑to‑one relationship to `Subject` via `subject_id`.
+
+These models are used by the ingestion adapters (`CoughvidAdapter`, `CoswaraAdapter`, `IcbhiAdapter`) through the `BaseAdapter.ingest` method, which creates instances of the models and persists them with SQLAlchemy sessions.
+
+---
+
 ## 3. The Ingestion Pipeline
 
 To move data from the ZIP files into our Unified PostgreSQL database, we built an object-oriented ingestion pipeline using the **Adapter Pattern**.

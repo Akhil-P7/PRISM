@@ -253,7 +253,7 @@ Generate respiratory embeddings.
 Manages:
 
 ```text
-FAISS
+TurboVec
 ```
 
 ---
@@ -665,7 +665,7 @@ Duration:
 Tasks:
 
 * Embedding generation
-* FAISS integration
+* TurboVec integration
 
 Deliverable:
 
@@ -791,7 +791,7 @@ Responsible for:
 Responsible for:
 
 * Embeddings
-* FAISS
+* TurboVec
 * Insight generation
 
 ---
