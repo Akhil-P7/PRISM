@@ -51,7 +51,7 @@ scipy = "^1.14.0"
 scikit-learn = "^1.6.0"
 
 # --- Vector Store ---
-faiss-cpu = "^1.9.0"
+turbovec = "^0.3.0"
 
 # --- Visualization / Frontend (Phase 1) ---
 streamlit = "^1.41.0"

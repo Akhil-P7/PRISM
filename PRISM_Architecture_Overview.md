@@ -16,10 +16,10 @@ PRISM is an end‑to‑end AI‑powered platform for pediatric respiratory sound
 | **Modeling** | Cough Detection CNN | Binary classification and segmentation of cough events within a recording. |
 | | Temporal Transformer | Captures longitudinal patterns across repeated recordings, predicts disease progression. |
 | | Embedding Generator | Produces a fixed‑size 512‑dim vector summarising the respiratory signature. |
-| **Retrieval** | FAISS Vector Store | Approximate nearest‑neighbour search over embeddings to find similar historical cases. |
+| **Retrieval** | TurboVec Vector Store | Approximate nearest‑neighbour search over embeddings using Google’s TurboQuant algorithm. |
 | **API** | FastAPI (Uvicorn) | Orchestrates pipelines, exposes REST endpoints for inference, retrieval and admin tasks. |
 | **Persistence** | PostgreSQL | Stores patient metadata, session info, model predictions, audit logs. |
-| | FAISS (disk‑backed) | Stores high‑dimensional embeddings for rapid similarity search. |
+| | TurboVec (disk‑backed) | Stores high‑dimensional embeddings with 4‑bit quantization for rapid similarity search. |
 | **Presentation** | Streamlit Dashboard | Interactive UI for clinicians: spectrogram visualisation, inference results, similarity heat‑maps, temporal trend charts. |
 
 ---
@@ -31,8 +31,8 @@ PRISM is an end‑to‑end AI‑powered platform for pediatric respiratory sound
    - *Cough Detection* flags cough segments.
    - *Temporal Transformer* analyses sequence of segments.
    - *Embedding Generator* compresses the processed tensor into a 512‑D vector.
-4. **Storage** – Embedding saved in FAISS; metadata & predictions persisted in PostgreSQL.
-5. **Retrieval** – FAISS returns *k* nearest historical embeddings.
+4. **Storage** – Embedding saved in TurboVec; metadata & predictions persisted in PostgreSQL.
+5. **Retrieval** – TurboVec returns *k* nearest historical embeddings.
 6. **Insight Synthesis** – Retrieval results combined with patient history → JSON payload.
 7. **Frontend** – Streamlit consumes the JSON, renders spectrograms, similarity cards, and a risk score.
 
@@ -115,8 +115,8 @@ CREATE TABLE model_predictions (
     created_at   TIMESTAMP DEFAULT now()
 );
 ```
-### FAISS Vector Store
-- **Index**: `faiss.IndexFlatIP` (inner‑product) stored on disk at `FAISS_INDEX_PATH`.
+### TurboVec Vector Store
+- **Index**: `TurboQuantIndex` with `IdMapIndex` wrapper (inner‑product, 4‑bit quantized) stored on disk at `TURBOVEC_INDEX_PATH`.
 - **Mapping table** (PostgreSQL) – `embedding_id` ↔ `recording_id` for lookup.
 
 ---
@@ -124,7 +124,7 @@ CREATE TABLE model_predictions (
 ## Development Phases (aligned with Bootstrap Guide)
 1. **Data Foundation** – adapters for COUGHVID, Coswara, ICBHI; unified schema implementation.
 2. **Core Models** – train Cough Detection CNN, prototype Temporal Transformer, generate embeddings.
-3. **Retrieval Engine** – build FAISS index, implement similarity pipeline.
+3. **Retrieval Engine** – build TurboVec index, implement similarity pipeline.
 4. **Backend Integration** – FastAPI routes, SQLAlchemy models, Alembic migrations.
 5. **Frontend Expansion** – Streamlit dashboards for spectrograms, risk scores, case similarity.
 6. **Testing & Evaluation** – unit, integration, pipeline tests; performance benchmarks.
@@ -133,7 +133,7 @@ CREATE TABLE model_predictions (
 ---
 
 ## Glossary
-- **FAISS** – Facebook AI Similarity Search, a library for efficient vector similarity.
+- **TurboVec** – Rust vector index with Python bindings, built on Google Research’s TurboQuant algorithm for efficient vector similarity search with 4‑bit quantization.
 - **Embedding** – Fixed‑size numeric representation of a high‑dimensional audio signal.
 - **Temporal Transformer** – Model that captures sequence dynamics across multiple recordings.
 - **Cough Detection CNN** – Convolutional network that isolates cough events from raw audio.

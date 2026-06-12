@@ -45,7 +45,7 @@ Audio Engine   Temporal Engine   Retrieval Engine
       └───────────────┼────────────────┘
                       ▼
                 Data Storage
-          (PostgreSQL + FAISS)
+          (PostgreSQL + TurboVec)
 ```
 
 ### Core Modules
@@ -56,7 +56,7 @@ Audio Engine   Temporal Engine   Retrieval Engine
 | **Cough Detection Engine** | CNN-based cough event detection from mel spectrograms | PyTorch |
 | **Temporal Intelligence** | Transformer-based trend analysis over cough event sequences | PyTorch Transformer |
 | **Environmental Correlation** | AQI, temperature, humidity correlation analysis | SciPy, Pandas |
-| **Retrieval-Augmented (RATM)** | Explainable AI via historical memory retrieval | FAISS, LLM Layer |
+| **Retrieval-Augmented (RATM)** | Explainable AI via historical memory retrieval | TurboVec, LLM Layer |
 | **Visualization Layer** | Interactive dashboard with trends, analytics, insights | Streamlit → Next.js |
 
 ---
@@ -81,7 +81,7 @@ PRISM/
 │
 ├── retrieval/              # Retrieval-Augmented Intelligence
 │   ├── embeddings/         # Respiratory embeddings
-│   ├── vector_store/       # FAISS index management
+│   ├── vector_store/       # TurboVec index management
 │   ├── retrieval_engine/   # Similarity search
 │   ├── memory_builder/     # Memory object construction
 │   └── insight_generator/  # Clinical insight generation
@@ -294,7 +294,7 @@ feature/frontend        # Dashboard features
 | **Phase 1** | Data Foundation — Dataset setup, unified schema, ingestion pipeline | 2 weeks |
 | **Phase 2** | Audio Intelligence — Spectrogram generation, CNN detector | 3 weeks |
 | **Phase 3** | Temporal Intelligence — Event generation, Transformer development | 3 weeks |
-| **Phase 4** | Retrieval Intelligence — Embedding generation, FAISS integration | 2 weeks |
+| **Phase 4** | Retrieval Intelligence — Embedding generation, TurboVec integration | 2 weeks |
 | **Phase 5** | Backend Development — FastAPI, database integration | 2 weeks |
 | **Phase 6** | Dashboard Development — Streamlit interface | 1 week |
 | **Phase 7** | Integration & Testing — End-to-end validation | 2 weeks |
