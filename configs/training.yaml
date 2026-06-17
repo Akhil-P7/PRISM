@@ -4,7 +4,7 @@
 
 # ---- Audio Processing ----
 audio:
-  sample_rate: 44100
+  sample_rate: 16000
   channels: 1
   segment_duration: 3.0  # seconds
   overlap: 0.5           # seconds
