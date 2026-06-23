@@ -41,16 +41,19 @@ def main():
 
     st.markdown(
         """
-        ### 📊 System Status
+        ### System Status
 
         | Module | Status |
         |--------|--------|
-        | Audio Processing Engine | 🔴 Not Started |
-        | Cough Detection (CNN) | 🔴 Not Started |
-        | Temporal Intelligence | 🔴 Not Started |
-        | Environmental Correlation | 🔴 Not Started |
-        | Retrieval Engine (RATM) | 🔴 Not Started |
-        | Dashboard | 🟡 In Progress |
+        | Audio Processing Engine | Mel Spectrogram Pipeline |
+        | Cough Detection (CNN) | ResNet-18, AUC 0.88 |
+        | Temporal Intelligence | 3-Layer Transformer, 100% (synthetic) |
+        | Retrieval Engine (RATM) | TurboVec + Template Insights |
+        | Environmental Correlation | Planned |
+        | Dashboard | Active (Clinical Insights page) |
+
+        Use the **sidebar** to navigate to the **Clinical Insights** page
+        for interactive RATM pipeline demonstrations.
         """
     )
 
