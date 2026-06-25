@@ -104,7 +104,7 @@ PostgreSQL
 
 ## Vector Store
 
-FAISS
+TurboVec (via Google's TurboQuant)
 
 ---
 
@@ -218,7 +218,7 @@ Example:
 ```env
 DATABASE_URL=postgresql://user:password@localhost/prism
 
-FAISS_INDEX_PATH=./vector_store
+TURBOVEC_INDEX_PATH=./vector_store
 
 DATASET_PATH=./datasets
 

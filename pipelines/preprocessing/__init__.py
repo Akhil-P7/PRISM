@@ -1,1 +1,1 @@
-"""PRISM Pipelines — Audio Preprocessing Pipeline"""
+"""PRISM Pipelines — Audio Preprocessing (Feature Extraction)."""

@@ -11,7 +11,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://prism:prism_secret@localhost:5432/prism_dev",
+    "postgresql://prism:prism_secret@localhost:5433/prism",
 )
 
 engine = create_engine(

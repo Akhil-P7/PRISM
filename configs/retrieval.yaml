@@ -2,18 +2,18 @@
 # PRISM — Retrieval Configuration
 # ===========================
 
-# ---- FAISS Vector Store ----
+# ---- TurboVec Vector Store (powered by Google's TurboQuant algorithm) ----
 vector_store:
   index_path: "./vector_store"
-  index_type: "IVFFlat"  # IVFFlat, Flat, HNSW
+  index_type: "TurboQuant"  # TurboQuant with IdMapIndex for stable IDs
+  bit_width: 4              # 4-bit quantization (16x compression vs float32)
   embedding_dimension: 512
-  similarity_metric: "cosine"  # cosine, l2, inner_product
-  nprobe: 10  # number of clusters to search
+  similarity_metric: "inner_product"  # TurboQuant uses inner product natively
 
 # ---- Retrieval Engine ----
 retrieval:
   top_k: 5                    # number of similar cases to retrieve
-  min_similarity_score: 0.7   # minimum cosine similarity threshold
+  min_similarity_score: 0.7   # minimum similarity threshold
   max_results: 10
 
 # ---- Memory Builder ----

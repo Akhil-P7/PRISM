@@ -578,8 +578,6 @@ Output
 512-Dimensional Vector
 ```
 
----
-
 These vectors are stored inside the vector database.
 
 ---
@@ -588,13 +586,17 @@ These vectors are stored inside the vector database.
 
 Candidate Systems:
 
-### FAISS
+### TurboVec (Selected)
 
 Advantages:
 
-* Fast
-* Lightweight
-* Research friendly
+* Built on Google Research's TurboQuant algorithm (ICLR 2026)
+* No training step — data-oblivious quantization
+* 16x memory compression (4-bit) vs float32
+* 10-19% faster search than FAISS on ARM
+* Native filtered search (allowlist in SIMD kernel)
+* Online ingest — no index rebuilds
+* Rust core with Python bindings
 
 ### ChromaDB
 
@@ -609,7 +611,7 @@ Decision
 
 Version 1:
 
-FAISS
+TurboVec
 
 ---
 

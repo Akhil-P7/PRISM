@@ -7,6 +7,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.api import insights, retrieval
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -48,14 +50,15 @@ async def health_check():
 
 
 # ---- Register API Routers ----
+app.include_router(retrieval.router, prefix="/api/v1", tags=["Retrieval"])
+app.include_router(insights.router, prefix="/api/v1", tags=["Insights"])
+
 # TODO: Uncomment as routers are implemented
-# from backend.api import datasets, recordings, events, temporal, retrieval, insights
+# from backend.api import datasets, recordings, events, temporal
 # app.include_router(datasets.router, prefix="/api/v1", tags=["Datasets"])
 # app.include_router(recordings.router, prefix="/api/v1", tags=["Recordings"])
 # app.include_router(events.router, prefix="/api/v1", tags=["Events"])
 # app.include_router(temporal.router, prefix="/api/v1", tags=["Temporal"])
-# app.include_router(retrieval.router, prefix="/api/v1", tags=["Retrieval"])
-# app.include_router(insights.router, prefix="/api/v1", tags=["Insights"])
 
 
 if __name__ == "__main__":

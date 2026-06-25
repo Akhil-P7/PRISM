@@ -11,8 +11,8 @@ services:
       - "8000:8000"
     environment:
       - APP_ENV=development
-      - DATABASE_URL=postgresql://prism:prism_secret@db:5432/prism
-      - FAISS_INDEX_PATH=/app/vector_store
+      - DATABASE_URL=postgresql://prism:prism_secret@db:5432/prism  # internal Docker network, stays 5432
+      - TURBOVEC_INDEX_PATH=/app/vector_store
       - LOG_LEVEL=INFO
     volumes:
       - .:/app
@@ -34,7 +34,7 @@ services:
       POSTGRES_PASSWORD: prism_secret
       POSTGRES_DB: prism
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
