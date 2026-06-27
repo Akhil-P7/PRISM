@@ -135,8 +135,32 @@ class IcbhiAdapter(BaseAdapter):
             "wheeze_cycles": wheeze_cycles,
         }
 
+    def _load_diagnoses(self, zip_path: str) -> dict[str, str]:
+        """Load patient diagnoses from the external CSV file."""
+        import csv
+
+        # The CSV is located in the extracted folder datasets/raw/icbhi/Patient_diagnosis.csv
+        zip_dir = os.path.dirname(zip_path)
+        csv_path = os.path.join(zip_dir, "icbhi", "Patient_diagnosis.csv")
+
+        diagnoses = {}
+        if os.path.exists(csv_path):
+            with open(csv_path, encoding="utf-8") as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if len(row) >= 2:
+                        diagnoses[str(row[0]).strip()] = row[1].strip()
+            logger.info(f"Loaded {len(diagnoses)} diagnoses from {csv_path}")
+        else:
+            logger.warning(
+                f"Diagnosis file not found at {csv_path}. Using None for condition."
+            )
+
+        return diagnoses
+
     def extract_metadata(self, zip_path: str) -> list[dict[str, Any]]:
         logger.info(f"Reading ICBHI metadata from {zip_path}")
+        diagnoses = self._load_diagnoses(zip_path)
 
         # Group recordings by patient
         patients: dict[str, list[dict]] = defaultdict(list)
@@ -201,7 +225,7 @@ class IcbhiAdapter(BaseAdapter):
                     "source_subject_id": patient_id,
                     "age": None,  # ICBHI does not include age in the ZIP
                     "gender": None,  # ICBHI does not include gender in the ZIP
-                    "respiratory_condition": None,  # Would need external diagnosis file
+                    "respiratory_condition": diagnoses.get(patient_id),
                     "has_fever": None,
                     "is_smoker": None,
                     "recordings": db_recordings,

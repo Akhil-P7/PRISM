@@ -8,6 +8,7 @@ Tracks: loss, accuracy, AUC-ROC, F1, precision, recall.
 from __future__ import annotations
 
 import numpy as np
+import torch
 from sklearn.metrics import (
     accuracy_score,
     f1_score,

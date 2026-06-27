@@ -102,6 +102,31 @@ def load_ratm_pipeline():
     return RATMPipeline(use_retrieval=False)
 
 
+@st.cache_resource
+def load_disease_classifier():
+    """Load and cache the disease classifier for embedding-based predictions."""
+    import os
+
+    from models.disease_classifier.classifier import (
+        DISEASE_CLASSES,
+        DiseaseClassifierHead,
+    )
+
+    classifier = DiseaseClassifierHead(input_dim=512, num_classes=len(DISEASE_CLASSES))
+    ckpt_path = os.path.join("models", "checkpoints", "disease_classifier_v1.pt")
+
+    if os.path.exists(ckpt_path):
+        classifier.load_state_dict(
+            torch.load(ckpt_path, map_location="cpu", weights_only=True)
+        )
+        st.sidebar.caption("Disease Classifier: loaded")
+    else:
+        st.sidebar.warning("Disease Classifier: no checkpoint (random weights)")
+
+    classifier.eval()
+    return classifier
+
+
 def audio_to_mel(audio_bytes: bytes, sample_rate: int = 16000) -> tuple:
     """
     Convert audio bytes to a log-mel spectrogram tensor.
@@ -556,8 +581,30 @@ def _process_audio(audio_bytes: bytes):
                     trajectory_class=traj_class,
                     subject_id="audio_patient_001",
                 )
+                insight_dict = dataclasses.asdict(insight)
+
+                # Predict disease probabilities using the cached classifier
+                try:
+                    from models.disease_classifier.classifier import DISEASE_CLASSES
+
+                    classifier = load_disease_classifier()
+                    emb_tensor = torch.tensor(
+                        result["embedding"], dtype=torch.float32
+                    ).unsqueeze(0)
+
+                    with torch.no_grad():
+                        logits = classifier(emb_tensor)
+                        probs = torch.softmax(logits, dim=1).squeeze().tolist()
+
+                    insight_dict["disease_probabilities"] = {
+                        cls: round(p, 4)
+                        for cls, p in zip(DISEASE_CLASSES, probs, strict=False)
+                    }
+                except Exception as e:
+                    st.warning(f"Could not load disease classifier: {e}")
+
                 _display_insight(
-                    dataclasses.asdict(insight),
+                    insight_dict,
                     show_audio_section=True,
                     cough_result=result,
                 )
@@ -642,6 +689,38 @@ def _display_insight(
             st.metric("Detection Result", status)
         with col_b:
             st.metric("CNN Confidence", f"{cough_result['probability']:.1%}")
+
+    # ── Disease Probabilities ──
+    probs = insight.get("disease_probabilities")
+    if probs:
+        st.markdown("")
+        st.markdown("### Probable Underlying Conditions")
+        st.caption("Based on the acoustic signature of the 512-D CNN embedding.")
+
+        # Sort and get top 3
+        sorted_probs = sorted(probs.items(), key=lambda x: x[1], reverse=True)
+        top_3 = sorted_probs[:3]
+
+        col_p1, col_p2, col_p3 = st.columns(3)
+        for i, (col, (disease, prob)) in enumerate(
+            zip([col_p1, col_p2, col_p3], top_3, strict=False)
+        ):
+            with col:
+                st.metric(f"Top {i+1} Match", disease, f"{prob:.1%}")
+
+        with st.expander("View All Disease Probabilities", expanded=False):
+            import pandas as pd
+
+            df_probs = pd.DataFrame(
+                list(probs.items()), columns=["Condition", "Probability"]
+            )
+            df_probs = df_probs.sort_values("Probability", ascending=False).reset_index(
+                drop=True
+            )
+            df_probs["Probability"] = df_probs["Probability"].apply(
+                lambda x: f"{x:.1%}"
+            )
+            st.dataframe(df_probs, use_container_width=True)
 
     # ── Generation Metadata ──
     with st.expander("Generation Metadata", expanded=False):
