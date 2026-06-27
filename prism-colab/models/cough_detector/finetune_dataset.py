@@ -122,12 +122,11 @@ class FineTuneDataset(Dataset):
         self.normalize = Normalize()
 
         # Fast spectrogram-domain mic augmentation (train only)
+        self.mic_augment: FastMicAugment | None = None
+        self.spec_augment: SpecAugment | None = None
         if split == "train":
             self.mic_augment = FastMicAugment(p=augment_prob)
             self.spec_augment = SpecAugment()
-        else:
-            self.mic_augment = None
-            self.spec_augment = None
 
     def __len__(self) -> int:
         return len(self.df)

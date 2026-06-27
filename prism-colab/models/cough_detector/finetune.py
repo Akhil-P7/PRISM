@@ -193,8 +193,8 @@ class FineTuneTrainer:
         console.print(f"  Freeze epochs  : {self.freeze_epochs}")
         console.print(f"  Learning rate  : {self.lr}")
         console.print(f"  Patience       : {self.patience}")
-        console.print(f"  Train samples  : {len(self.train_loader.dataset)}")
-        console.print(f"  Val samples    : {len(self.val_loader.dataset)}")
+        console.print(f"  Train samples  : {len(self.train_loader.dataset)}")  # type: ignore
+        console.print(f"  Val samples    : {len(self.val_loader.dataset)}")  # type: ignore
         console.print(f"  Checkpoint     : {self.checkpoint_path}")
         console.print()
 

@@ -302,7 +302,9 @@ class MicAugment:
             "bandpass": 0.3,
         }
 
-        self.transforms: list[tuple[str, float, object]] = [
+        import typing
+
+        self.transforms: list[tuple[str, float, typing.Any]] = [
             ("reverb", probs.get("reverb", 0.5), RoomReverb(sample_rate=sample_rate)),
             ("noise", probs.get("noise", 0.7), BackgroundNoise()),
             ("gain", probs.get("gain", 0.6), GainJitter()),

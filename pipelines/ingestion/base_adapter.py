@@ -96,6 +96,13 @@ class BaseAdapter(ABC):
                 .first()
             )
             if existing:
+                existing.age = subj_data.get("age")
+                existing.gender = subj_data.get("gender")
+                existing.respiratory_condition = subj_data.get("respiratory_condition")
+                existing.has_fever = subj_data.get("has_fever")
+                existing.is_smoker = subj_data.get("is_smoker")
+                session.flush()
+                subject_count += 1
                 continue
 
             subject = Subject(

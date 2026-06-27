@@ -7,12 +7,15 @@ Provides singleton pipeline management and error handling.
 
 from __future__ import annotations
 
+import os
 import threading
 
 import numpy as np
 import pandas as pd
+import torch
 from loguru import logger
 
+from models.disease_classifier.classifier import DISEASE_CLASSES, DiseaseClassifierHead
 from retrieval.insight_generator.insight_generator import ClinicalInsight
 from retrieval.ratm_pipeline import RATMPipeline
 
@@ -46,6 +49,83 @@ def get_pipeline(use_retrieval: bool = True) -> RATMPipeline:
         _pipeline = RATMPipeline(use_retrieval=use_retrieval)
         logger.info("RATM pipeline initialised")
         return _pipeline
+
+
+# ──────────────────────────────────────────────────────────────────
+# Cached disease classifier singleton
+# ──────────────────────────────────────────────────────────────────
+
+_disease_classifier: DiseaseClassifierHead | None = None
+_classifier_lock = threading.Lock()
+
+_DISEASE_CKPT_PATH = os.path.join("models", "checkpoints", "disease_classifier_v1.pt")
+
+
+def _get_disease_classifier() -> DiseaseClassifierHead | None:
+    """
+    Lazy-load and cache the disease classifier.
+
+    Returns None if the checkpoint is not available.
+    Thread-safe: only the first caller loads weights.
+    """
+    global _disease_classifier
+
+    if _disease_classifier is not None:
+        return _disease_classifier
+
+    with _classifier_lock:
+        if _disease_classifier is not None:
+            return _disease_classifier
+
+        classifier = DiseaseClassifierHead(
+            input_dim=512, num_classes=len(DISEASE_CLASSES)
+        )
+
+        if os.path.exists(_DISEASE_CKPT_PATH):
+            classifier.load_state_dict(
+                torch.load(
+                    _DISEASE_CKPT_PATH,
+                    map_location="cpu",
+                    weights_only=True,
+                )
+            )
+            logger.info(f"Disease classifier loaded from {_DISEASE_CKPT_PATH}")
+        else:
+            logger.warning(
+                f"Disease classifier checkpoint not found: {_DISEASE_CKPT_PATH}. "
+                "Using randomly initialised weights."
+            )
+
+        classifier.eval()
+        _disease_classifier = classifier
+        return _disease_classifier
+
+
+def _predict_disease_probabilities(
+    patient_embedding: list[float],
+) -> dict[str, float] | None:
+    """
+    Run the cached disease classifier on a 512-dim embedding.
+
+    Returns a dict mapping disease name → probability, or None on failure.
+    """
+    classifier = _get_disease_classifier()
+    if classifier is None:
+        return None
+
+    try:
+        emb_tensor = torch.tensor(patient_embedding, dtype=torch.float32).unsqueeze(0)
+
+        with torch.no_grad():
+            logits = classifier(emb_tensor)
+            probs = torch.softmax(logits, dim=1).squeeze().tolist()
+
+        return {
+            cls: round(p, 4) for cls, p in zip(DISEASE_CLASSES, probs, strict=False)
+        }
+    except Exception as e:
+        logger.warning(f"Failed to compute disease probabilities: {e}")
+        return None
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -98,12 +178,20 @@ def generate_insight(
         if patient_embedding is not None:
             embedding = np.array(patient_embedding, dtype=np.float32)
 
-        return pipeline.generate_insight(
+        insight = pipeline.generate_insight(
             patient_stats=stats_df,
             patient_embedding=embedding,
             subject_id=subject_id,
             k=k,
         )
+
+        # Predict disease probabilities from the embedding
+        if patient_embedding is not None:
+            insight.disease_probabilities = _predict_disease_probabilities(
+                patient_embedding
+            )
+
+        return insight
 
     except InsightServiceError:
         raise

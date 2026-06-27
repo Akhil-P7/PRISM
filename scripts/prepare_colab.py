@@ -23,6 +23,7 @@ def prepare_colab_package():
 
     shutil.copytree("models/shared", models_dest / "shared")
     shutil.copytree("models/cough_detector", models_dest / "cough_detector")
+    shutil.copytree("models/disease_classifier", models_dest / "disease_classifier")
 
     (models_dest / "__init__.py").touch()
     (models_dest / "temporal_transformer").mkdir()

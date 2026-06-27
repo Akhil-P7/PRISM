@@ -57,9 +57,9 @@ class CoswaraAdapter(BaseAdapter):
         val = str(covid_status).strip().lower()
         mapping = {
             "healthy": "Healthy",
-            "positive_mild": "COVID-19 Mild",
-            "positive_moderate": "COVID-19 Moderate",
-            "positive_asymp": "COVID-19 Asymptomatic",
+            "positive_mild": "COVID-19",
+            "positive_moderate": "COVID-19",
+            "positive_asymp": "COVID-19",
             "resp_illness_not_identified": "Respiratory Illness",
             "recovered_full": "Recovered",
             "no_resp_illness_exposed": "Exposed",
