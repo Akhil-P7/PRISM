@@ -81,11 +81,12 @@ datasets/features/
 *.h5
 *.hdf5
 
-# ---- FAISS Vector Store ----
+# ---- Embeddings & Vector Store ----
 vector_store/
 *.faiss
 *.index
-
+models/embeddings/*.csv
+models/embeddings/*.npy
 # ---- Database ----
 *.db
 *.sqlite3
