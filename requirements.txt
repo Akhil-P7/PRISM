@@ -115,7 +115,6 @@ plotly==5.24.1
 pluggy==1.6.0
 pooch==1.9.0
 pre_commit==4.6.0
--e git+https://github.com/Akhil-P7/PRISM@2f8e26364d64822c9f51a341eb3b2695c6cdff47#egg=prism
 prometheus_client==0.25.0
 prompt_toolkit==3.0.52
 protobuf==7.35.0

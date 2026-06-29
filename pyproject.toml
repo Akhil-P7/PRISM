@@ -36,9 +36,9 @@ psycopg2-binary = "^2.9.10"
 asyncpg = "^0.30.0"
 
 # --- Machine Learning ---
-torch = "^2.5.0"
-torchaudio = "^2.5.0"
-torchvision = "^0.20.0"
+torch = "*"
+torchaudio = "*"
+torchvision = "*"
 
 # --- Audio Processing ---
 librosa = "^0.10.2"
