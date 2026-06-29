@@ -37,6 +37,7 @@ def inject_css():
         html, body, [class*="css"] {
             font-family: 'Inter', sans-serif;
             color: var(--prism-text);
+            overflow-y: scroll !important;
         }
 
         /* Streamlit Overrides */
