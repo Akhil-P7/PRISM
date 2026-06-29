@@ -47,6 +47,7 @@ def _insight_to_response(insight) -> InsightResponse:
         alerts=[],  # populated below if available
         templates_used=insight.templates_used,
         generation_method=insight.generation_method,
+        disease_probabilities=insight.disease_probabilities,
     )
 
 

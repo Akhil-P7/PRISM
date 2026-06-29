@@ -130,3 +130,7 @@ class InsightResponse(BaseModel):
         default="template_v1",
         description="Generation method identifier.",
     )
+    disease_probabilities: dict[str, float] | None = Field(
+        default=None,
+        description="Predicted probabilities for respiratory diseases.",
+    )

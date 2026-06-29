@@ -58,6 +58,7 @@ class ClinicalInsight:
     alerts_count: int
     templates_used: list[str]
     generation_method: str = "template_v1"
+    disease_probabilities: dict[str, float] | None = None
 
 
 # ──────────────────────────────────────────────────────────────────
