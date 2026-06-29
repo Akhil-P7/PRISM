@@ -1,3 +1,14 @@
+---
+title: PRISM - Pediatric Respiratory Intelligence
+emoji: 🩺
+colorFrom: blue
+colorTo: green
+sdk: streamlit
+sdk_version: 1.35.0
+app_file: frontend/app.py
+pinned: false
+---
+
 <div align="center">
 
 # 🫁 PRISM
