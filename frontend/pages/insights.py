@@ -19,12 +19,20 @@ import io
 import os
 import random
 import string
+import sys
 
-import numpy as np
-import streamlit as st
-import torch
+# Ensure the project root is on sys.path so that first-party packages
+# (retrieval, models, backend, etc.) can be resolved when Streamlit
+# launches this page directly.
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
-from frontend.styles import inject_css, inject_sidebar_nav
+import numpy as np  # noqa: E402
+import streamlit as st  # noqa: E402
+import torch  # noqa: E402
+
+from frontend.styles import inject_css, inject_sidebar_nav  # noqa: E402
 
 st.set_page_config(
     page_title="PRISM - Clinical Insights",
