@@ -34,7 +34,7 @@ PRISM transforms raw respiratory audio into clinically meaningful intelligence t
 Raw Audio → Cough Detection → Temporal Analysis → Environmental Correlation → Retrieval-Augmented Insights
 ```
 
-Unlike simple cough classifiers, PRISM provides **explainable, temporally-aware respiratory monitoring** powered by a novel **Retrieval-Augmented Temporal Modeling (RATM)** architecture.
+Unlike simple cough classifiers, PRISM provides **explainable, temporally-aware respiratory monitoring** powered by a **Retrieval-Augmented Temporal Modeling (RATM)** architecture.
 
 ---
 
