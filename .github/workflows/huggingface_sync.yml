@@ -13,8 +13,8 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Pull LFS files
-        run: git lfs pull
+      - name: Fetch all LFS objects
+        run: git lfs fetch --all origin
 
       - name: Push to Hugging Face Space
         env:

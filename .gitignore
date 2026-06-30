@@ -86,6 +86,7 @@ vector_store/
 *.faiss
 *.index
 models/embeddings/*.csv
+!models/embeddings/embeddings_metadata.csv
 models/embeddings/*.npy
 # ---- Database ----
 *.db
