@@ -1,0 +1,34 @@
+{
+  "fine_tune_best_val": {
+    "loss": 0.31154,
+    "accuracy": 0.747,
+    "auc": 0.8845,
+    "f1": 0.7712,
+    "precision": 0.9369,
+    "recall": 0.6553
+  },
+  "clean_test": {
+    "loss": 0.48118,
+    "accuracy": 0.7461,
+    "auc": 0.8801,
+    "f1": 0.7691,
+    "precision": 0.9325,
+    "recall": 0.6544
+  },
+  "mic_test": {
+    "loss": 0.48118,
+    "accuracy": 0.7461,
+    "auc": 0.8801,
+    "f1": 0.7691,
+    "precision": 0.9325,
+    "recall": 0.6544
+  },
+  "original_on_mic": {
+    "loss": 0.47277,
+    "accuracy": 0.74,
+    "auc": 0.8732,
+    "f1": 0.7629,
+    "precision": 0.9289,
+    "recall": 0.6473
+  }
+}

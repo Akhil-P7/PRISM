@@ -59,6 +59,8 @@ ehthumbs.db
 *.onnx
 *.ckpt
 checkpoints/
+!models/checkpoints/
+!models/checkpoints/*
 runs/
 wandb/
 mlruns/
