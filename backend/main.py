@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="PRISM API",
     description=(
-        "Pediatric Respiratory Intelligence System — "
+        "Patient Respiratory Intelligence System — "
         "REST API for respiratory sound analysis, temporal intelligence, "
         "and retrieval-augmented clinical insight generation."
     ),

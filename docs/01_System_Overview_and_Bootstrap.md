@@ -7,7 +7,7 @@
 
 ## 1. Executive Overview
 
-PRISM (Pediatric Respiratory Intelligence System) is an end‑to‑end AI‑powered platform for pediatric respiratory sound analysis. It ingests raw audio recordings from children, extracts high‑resolution acoustic features, runs specialized deep‑learning models, stores learned embeddings, and retrieves clinically‑relevant cases to generate diagnostic insights.
+PRISM (Patient Respiratory Intelligence System) is an end‑to‑end AI‑powered platform for Patient respiratory sound analysis. It ingests raw audio recordings from patients, extracts high‑resolution acoustic features, runs specialized deep‑learning models, stores learned embeddings, and retrieves clinically‑relevant cases to generate diagnostic insights.
 
 This document serves as both the high-level architecture overview and the mandatory onboarding guide for all PRISM engineering contributors.
 

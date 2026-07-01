@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "prism"
 version = "0.1.0"
-description = "PRISM — Pediatric Respiratory Intelligence System. A modular AI platform for respiratory sound analysis, temporal intelligence, and retrieval-augmented clinical insight generation."
+description = "PRISM — Patient Respiratory Intelligence System. A modular AI platform for respiratory sound analysis, temporal intelligence, and retrieval-augmented clinical insight generation."
 authors = ["PRISM Team"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/prism-team/prism"
-keywords = ["respiratory", "ai", "pediatric", "cough-detection", "temporal-intelligence"]
+keywords = ["respiratory", "ai", "Patient", "cough-detection", "temporal-intelligence"]
 
 packages = [
     { include = "backend" },

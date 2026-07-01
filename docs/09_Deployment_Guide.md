@@ -1,6 +1,6 @@
 # PRISM Deployment Guide (Hugging Face Spaces)
 
-This guide details how to deploy the PRISM Pediatric Respiratory Intelligence System to Hugging Face Spaces using the Streamlit SDK and automated GitHub Actions.
+This guide details how to deploy the PRISM Patient Respiratory Intelligence System to Hugging Face Spaces using the Streamlit SDK and automated GitHub Actions.
 
 ---
 
@@ -28,7 +28,7 @@ poetry export -f requirements.txt --output requirements.txt --without-hashes
 The top of the `README.md` must include:
 ```yaml
 ---
-title: PRISM - Pediatric Respiratory Intelligence
+title: PRISM - Patient Respiratory Intelligence
 emoji: 🩺
 colorFrom: blue
 colorTo: green

@@ -1,7 +1,7 @@
 # PRISM Cough Detector: CNN Implementation & Working Guide
 
 ## 1. Overview
-The Cough Detector is a convolutional neural network (CNN) designed to identify cough events from pediatric respiratory audio recordings. It operates on **Mel Spectrograms** (visual representations of audio frequencies over time) and serves two primary purposes:
+The Cough Detector is a convolutional neural network (CNN) designed to identify cough events from Patient respiratory audio recordings. It operates on **Mel Spectrograms** (visual representations of audio frequencies over time) and serves two primary purposes:
 1. **Binary Classification**: Determines if a 3-second audio segment contains a cough (`is_cough = True/False`).
 2. **Embedding Generation**: Compresses the audio segment into a rich 512-dimensional vector. These vectors will later be fed into **TurboVec** for high-speed similarity search (finding similar historical patient cases).
 

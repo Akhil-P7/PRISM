@@ -2,7 +2,7 @@
 
 # PRISM
 
-## Pediatric Respiratory Intelligence System
+## Patient Respiratory Intelligence System
 
 **Version:** 1.0
 **Document Type:** Data Engineering Specification
@@ -39,7 +39,7 @@ After evaluation, PRISM incorporates the following datasets:
 
 ## Auxiliary Dataset: ICBHI 2017
 **Role:** Respiratory pathology dataset.
-**Reason:** Clinical respiratory sounds, pediatric representation, disease annotations.
+**Reason:** Clinical respiratory sounds, Patient representation, disease annotations.
 **Used For:** Generalization testing, respiratory pattern analysis, future expansion.
 
 ---
@@ -151,7 +151,7 @@ datasets/
 # 9. Future Expansion
 
 The data ingestion model is intentionally extensible. Future datasets may include:
-* Pediatric hospital recordings
+* Patient hospital recordings
 * Wearable microphone streams
 * Home monitoring systems
 

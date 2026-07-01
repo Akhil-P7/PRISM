@@ -12,7 +12,7 @@ import streamlit as st
 from frontend.styles import inject_css, inject_sidebar_nav
 
 st.set_page_config(
-    page_title="PRISM — Pediatric Respiratory Intelligence System",
+    page_title="PRISM — Patient Respiratory Intelligence System",
     page_icon="🫁",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -29,7 +29,7 @@ def main():
         """
         <div style="padding: 2rem 0; text-align: center; background-image: linear-gradient(to bottom, rgba(13, 27, 42, 0.5), var(--prism-bg));">
             <h1 class="prism-title">🫁 PRISM</h1>
-            <p class="prism-subtitle">Pediatric Respiratory Intelligence System for Monitoring</p>
+            <p class="prism-subtitle">Patient Respiratory Intelligence System for Monitoring</p>
         </div>
         """,
         unsafe_allow_html=True,

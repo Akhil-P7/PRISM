@@ -2,7 +2,7 @@
 
 # PRISM
 
-## Pediatric Respiratory Intelligence System
+## Patient Respiratory Intelligence System
 
 **Version:** 1.0
 **Document Type:** Database Design Specification

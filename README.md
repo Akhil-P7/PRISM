@@ -1,5 +1,5 @@
 ---
-title: PRISM - Pediatric Respiratory Intelligence
+title: PRISM - Patient Respiratory Intelligence
 emoji: 🩺
 colorFrom: blue
 colorTo: green
@@ -13,9 +13,9 @@ pinned: false
 
 # 🫁 PRISM
 
-### Pediatric Respiratory Intelligence System
+### Patient Respiratory Intelligence System
 
-**A state-of-the-art AI platform for pediatric respiratory analysis, longitudinal temporal intelligence, and retrieval-augmented clinical diagnostics.**
+**A state-of-the-art AI platform for Patient respiratory analysis, longitudinal temporal intelligence, and retrieval-augmented clinical diagnostics.**
 
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -139,6 +139,6 @@ PRISM is automatically deployed to Hugging Face Spaces via GitHub Actions. Any p
 
 **Built with ❤️ by the PRISM Team**
 
-*Advancing pediatric respiratory health through explainable, temporal AI.*
+*Advancing Patient respiratory health through explainable, temporal AI.*
 
 </div>
