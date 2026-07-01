@@ -1,11 +1,15 @@
 # PRISM Deployment Guide (Hugging Face Spaces)
 
-This guide details how to deploy the PRISM Pediatric Respiratory Intelligence System to Hugging Face Spaces using the Streamlit SDK.
+This guide details how to deploy the PRISM Pediatric Respiratory Intelligence System to Hugging Face Spaces using the Streamlit SDK and automated GitHub Actions.
+
+---
 
 ## 1. Prerequisites
-- A Hugging Face account
-- The PRISM source code repository (cleaned and prepped)
+- A Hugging Face account with an active access token (`HF_TOKEN`)
+- The PRISM source code repository
 - `requirements.txt` generated from Poetry
+
+---
 
 ## 2. Preparing the Repository
 Ensure that your repository has the following files at the root:
@@ -14,7 +18,7 @@ Ensure that your repository has the following files at the root:
 - `README.md`: Must contain the Hugging Face YAML metadata block at the top.
 
 ### Generating requirements.txt
-If you update dependencies using Poetry, you must regenerate `requirements.txt`:
+If you update dependencies using Poetry, regenerate `requirements.txt`:
 ```bash
 poetry self add poetry-plugin-export
 poetry export -f requirements.txt --output requirements.txt --without-hashes
@@ -35,50 +39,78 @@ pinned: false
 ---
 ```
 
-## 3. Creating the Space
-1. Go to [Hugging Face Spaces](https://huggingface.co/spaces) and click **Create new Space**.
-2. Name your Space (e.g., `PRISM`).
-3. Select **Streamlit** as the Space SDK.
-4. Choose the hardware (the free CPU basic tier is sufficient for PRISM, though inference may be slightly slower).
-5. Set visibility to **Public** or **Private** based on your preference.
-6. Click **Create Space**.
+---
 
-## 4. Deploying the Code
-You can deploy your code in one of two ways:
+## 3. Git LFS (Large File Storage) Configuration
+Because AI model files and vector metadata are too large for standard git, PRISM uses Git LFS. **Failure to configure this correctly will result in a deployment rejection.**
 
-### Option A: Using the Hugging Face UI
-1. Clone the Hugging Face Space repository locally:
-   `git clone https://huggingface.co/spaces/<your-username>/PRISM`
-2. Copy all PRISM files (excluding `.git`, `datasets/`, `venv/`, etc.) into the cloned folder.
-3. Commit and push:
-   ```bash
-   git add .
-   git commit -m "Initial PRISM deployment"
-   git push
-   ```
+Tracked files:
+- Checkpoints: `models/checkpoints/*.pt`
+- Vector Metadata: `models/embeddings/*.csv`
 
-### Option B: Connecting a GitHub Repository
-If your PRISM code is hosted on GitHub, you can use Hugging Face Spaces' **GitHub integration** or setup **GitHub Actions** to automatically sync your GitHub repository to the Space.
-
-## 5. Model Checkpoints
-Hugging Face Spaces have a storage limit. Ensure your `models/checkpoints/` folder contains only the best `.pt` files:
-- `cough_detector_best.pt`
-- `disease_classifier_v1.pt`
-- `temporal_transformer_best.pt`
-
-**Note on LFS:** Since `.pt` files are large, they should be tracked using Git LFS (Large File Storage) when pushing to Hugging Face:
-```bash
-git lfs install
-git lfs track "*.pt"
-git add .gitattributes
+Ensure these are tracked in `.gitattributes`:
+```text
+models/checkpoints/*.pt filter=lfs diff=lfs merge=lfs -text
+models/embeddings/*.csv filter=lfs diff=lfs merge=lfs -text
+```
+Ensure they are **NOT** ignored in `.gitignore`:
+```text
+!models/checkpoints/*.pt
+!models/embeddings/embeddings_metadata.csv
 ```
 
-## 6. Verification
-Once the code is pushed, Hugging Face will automatically begin building the Docker container for the Streamlit app. You can monitor the build logs in the **Logs** tab.
+---
+
+## 4. Automated Deployment (GitHub Actions)
+
+The recommended deployment strategy uses GitHub Actions to automatically sync the `main` branch to Hugging Face Spaces.
+
+### 4.1 Set GitHub Secrets
+In your GitHub repository, go to **Settings > Secrets and variables > Actions** and add:
+- `HF_TOKEN`: Your Hugging Face access token (with `write` permissions).
+- `HF_USERNAME`: Your Hugging Face username.
+- `HF_SPACE_NAME`: The name of the target Space (e.g., `PRISM`).
+
+### 4.2 The Workflow File
+Ensure `.github/workflows/huggingface_sync.yml` exists with the following configuration. Note the crucial `git lfs fetch --all origin` step, which is required to prevent "missing local objects" errors when pushing to HF.
+
+```yaml
+name: Sync to Hugging Face hub
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Fetch all LFS objects
+        run: git lfs fetch --all origin
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          HF_SPACE_NAME: ${{ secrets.HF_SPACE_NAME }}
+        run: |
+          git remote add space https://huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME
+          git push --force https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$HF_SPACE_NAME main
+```
+
+---
+
+## 5. Verification
+Once code is pushed to `main`, monitor the GitHub Actions logs. If successful, Hugging Face will automatically begin building the Docker container for the Streamlit app.
 
 If the build succeeds, the App will become **Running**.
 
 ### Troubleshooting
+- **No checkpoint found / Using untrained weights:** Ensure you did not ignore the `.pt` files in `.gitignore`.
+- **Remote rejected (missing LFS objects):** Ensure the GitHub Actions workflow contains `git lfs fetch --all origin`.
 - **Missing Module Error:** Check `requirements.txt` to ensure all dependencies are listed.
-- **File Not Found Error:** Ensure that relative paths in the code (e.g., `models/checkpoints/...`) correctly point to the files uploaded to the Space.
 - **Theme Not Applying:** Ensure `.streamlit/config.toml` is committed to the repository so the dark theme is applied on Hugging Face.

@@ -36,9 +36,9 @@ Audio → Prediction
 
 PRISM follows:
 
-Audio → Event Detection → Temporal Understanding → Retrieval → Clinical Insight
+Audio → Event Detection → Temporal Understanding → Disease Classification → Retrieval → Clinical Insight
 
-Each stage solves a distinct problem.
+Each stage solves a distinct problem, contributing to a highly explainable final assessment.
 
 ---
 
@@ -48,25 +48,24 @@ Each stage solves a distinct problem.
 Raw Audio
       │
       ▼
-Audio Representation Layer
+Audio Representation Layer (Mel Spectrograms)
       │
       ▼
-Cough Detection Layer
+Cough Detection Layer (ResNet-18)
       │
       ▼
 Event Generation Layer
       │
-      ▼
-Temporal Intelligence Layer
-      │
-      ▼
-Environmental Intelligence Layer
-      │
-      ▼
-Retrieval Layer
-      │
-      ▼
-Clinical Insight Generation
+      ├───────────────────────┐
+      ▼                       ▼
+Temporal Intelligence   Disease Classification
+      │                       │
+      └───────────┬───────────┘
+                  ▼
+          Retrieval Layer (TurboVec)
+                  │
+                  ▼
+      Clinical Insight Generation
 ```
 
 ---
@@ -87,12 +86,7 @@ Raw audio contains:
 * Device-specific artifacts
 * Large dimensionality
 
-Training directly on waveform data requires:
-
-* Massive datasets
-* Large compute resources
-
-Neither is practical for our project.
+Training directly on waveform data requires massive datasets and large compute resources, neither of which is practical for our current deployment strategy.
 
 ---
 
@@ -108,47 +102,17 @@ Advantages:
 * Preserves frequency information
 * Human-auditory inspired
 * Well-established in audio AI research
+* Compatible with standard image-based CNN architectures
 
 ---
 
 # Why Mel Spectrogram Instead of MFCC?
 
-Many student projects use:
+Many legacy audio projects use:
 
 MFCC → LSTM
 
-However MFCCs were designed decades ago for speech recognition.
-
-They compress information aggressively.
-
----
-
-### MFCC Limitations
-
-* Loses spectral detail
-* Difficult for deep feature learning
-* Limits transfer learning
-
----
-
-### Mel Spectrogram Benefits
-
-* Richer representation
-* Compatible with CNNs
-* Better visual pattern learning
-* Better transfer learning
-
----
-
-## Decision
-
-Primary Representation:
-
-Mel Spectrogram
-
-Secondary Baseline:
-
-MFCC
+However, MFCCs compress information aggressively and discard spectral details, making deep feature learning and transfer learning difficult. Mel Spectrograms provide a richer representation for modern CNNs.
 
 ---
 
@@ -156,112 +120,37 @@ MFCC
 
 ## Objective
 
-Determine whether a cough event exists within an audio segment.
+Determine whether a cough event exists within an audio segment and extract a rich acoustic embedding.
 
 ---
 
-# Candidate Models
+# Proposed Architecture
 
-### Option 1
-
-CNN
-
-### Option 2
-
-CRNN
-
-### Option 3
-
-Transformer Audio Models
-
-### Option 4
-
-Audio Foundation Models
-
----
-
-# Model Evaluation
-
-## CNN
-
-Advantages:
-
-* Fast training
-* Small dataset friendly
-* Excellent local pattern recognition
-* Easy deployment
-
-Disadvantages:
-
-* Limited temporal reasoning
-
----
-
-## CRNN
-
-Advantages:
-
-* CNN + Sequence Modeling
-
-Disadvantages:
-
-* Increased complexity
-* Harder optimization
-
----
-
-## Audio Transformers
-
-Advantages:
-
-* State-of-the-art
-
-Disadvantages:
-
-* Large dataset requirements
-* High computational cost
-
----
-
-# Decision
-
-Version 1:
-
-CNN
-
-Future:
-
-Audio Transformer Benchmark
-
----
-
-# Proposed CNN Architecture
+**Model:** ResNet-18 CNN
 
 ```text
 Mel Spectrogram
         │
         ▼
-Conv Block 1
-        │
-        ▼
-Conv Block 2
-        │
-        ▼
-Conv Block 3
+   ResNet Blocks
         │
         ▼
 Global Average Pooling
         │
         ▼
+   512-D Embedding
+        │
+        ▼
 Fully Connected Layer
         │
         ▼
-Sigmoid
+     Sigmoid
 ```
 
 Output:
 
-P(Cough)
+1. `P(Cough)` - Probability that the segment contains a cough.
+2. `512-D Acoustic Embedding` - A dense vector representing the acoustic signature of the cough, used later for disease classification and vector retrieval.
 
 ---
 
@@ -269,19 +158,13 @@ P(Cough)
 
 Purpose:
 
-Convert predictions into structured respiratory events.
+Convert raw frame-level predictions into structured respiratory events.
 
 ---
 
 Input:
 
-```text
-Audio Segment
-
-Prediction = Cough
-```
-
----
+Audio Segment + P(Cough)
 
 Output:
 
@@ -294,15 +177,7 @@ Output:
 }
 ```
 
----
-
-# Why Event Abstraction?
-
-Temporal models should learn respiratory behavior.
-
-Not raw acoustics.
-
-This separation improves explainability.
+This separation ensures temporal models learn respiratory behavior (frequency, clustering) rather than raw acoustic noise.
 
 ---
 
@@ -310,245 +185,88 @@ This separation improves explainability.
 
 ## Objective
 
-Understand how coughing evolves over time.
-
----
-
-# Why Not Use LSTM?
-
-Traditional architecture:
-
-```text
-MFCC
- ↓
-LSTM
- ↓
-Prediction
-```
-
-Problems:
-
-* Sequential bottleneck
-* Vanishing gradients
-* Weak long-range reasoning
-* Limited interpretability
+Understand how coughing evolves over a 30-day window to predict clinical trajectories.
 
 ---
 
 # Why Transformer?
 
-Transformers use attention mechanisms.
-
-Benefits:
-
-* Long-range dependency modeling
-* Parallel processing
-* Better interpretability
-* Stronger temporal reasoning
+Traditional RNNs/LSTMs suffer from sequential bottlenecks and weak long-range reasoning. Transformers use attention mechanisms to model 30-day histories in parallel, offering stronger temporal reasoning and better interpretability.
 
 ---
 
 # Input Features
 
-For each time window:
+For each time window (daily aggregates):
 
-```text
-Cough Count
-
-Average Duration
-
-Average Intensity
-
-Night Ratio
-
-Inter-Cough Interval
-```
+* Cough Count
+* Average Duration
+* Average Intensity
+* Night Ratio
+* Inter-Cough Interval
 
 ---
 
-# Temporal Transformer Architecture
+# Output Trajectories
 
-```text
-Event Sequence
-       │
-       ▼
-Feature Embedding
-       │
-       ▼
-Positional Encoding
-       │
-       ▼
-Transformer Encoder
-       │
-       ▼
-Temporal Representation
-       │
-       ▼
-Prediction Head
-```
+The Temporal Transformer predicts one of four distinct trends:
+
+* `Stable Trend`
+* `Improving Trend`
+* `Increasing Trend`
+* `Abnormal Spike`
 
 ---
 
-# Outputs
-
-Examples:
-
-* Stable Trend
-* Increasing Trend
-* Decreasing Trend
-* Abnormal Spike
-
----
-
-# 8. Environmental Intelligence Layer
+# 8. Disease Classification Layer
 
 Purpose:
 
-Study environmental influence.
+Predict specific respiratory conditions based purely on acoustic signatures.
 
 ---
 
-Input Features
+# Architecture
 
-```text
-AQI
+A Multi-Layer Perceptron (MLP) head that takes the `512-D Acoustic Embedding` from the Cough Detector as input.
 
-Temperature
+Output:
 
-Humidity
-
-Date
-
-Time
-```
-
----
-
-# Modeling Strategy
-
-Initially:
-
-Statistical Correlation
-
-Methods:
-
-* Pearson Correlation
-* Spearman Correlation
-
----
-
-Future:
-
-Environmental Transformer
-
----
-
-Output
-
-```text
-Environmental Risk Score
-```
+Probability distribution over specific diseases (e.g., Asthma, Bronchitis, Pneumonia, Pertussis).
 
 ---
 
 # 9. Retrieval-Augmented Temporal Modeling (RATM)
 
-This is the core research contribution.
+This is the core research contribution of PRISM.
 
 ---
 
 # Problem
 
-Traditional models predict.
-
-They do not explain.
-
-Example:
-
-```text
-Prediction:
-Risk Increasing
-```
-
-Question:
-
-Why?
-
-Most models cannot answer.
+Traditional models predict (e.g., "Asthma: 80%"). They do not explain *why*. Most AI lacks historical context to justify its assessments.
 
 ---
 
 # Proposed Solution
 
-Retrieval-Augmented Temporal Modeling
+Retrieval-Augmented Temporal Modeling (RATM). By retrieving historically similar patient cases, the AI can ground its predictions in real-world evidence.
 
 ---
 
 ## Components
 
-### Temporal Transformer
-
-Learns trends.
-
----
-
-### Memory Store
-
-Stores:
-
-* Historical trends
-* Event summaries
-* Environmental conditions
-
----
+### Vector Database (TurboVec)
+Stores historical 512-D acoustic embeddings mapped to known patient diagnoses and trajectories.
 
 ### Retriever
+Searches TurboVec for the top-$K$ embeddings mathematically closest to the current patient's embedding.
 
-Searches:
+### Memory Builder
+Assembles the current patient's temporal trajectory, demographic data, and the retrieved historical cases into a structured "Clinical Memory."
 
-* Similar trends
-* Similar respiratory episodes
-
----
-
-### Clinical Knowledge Base
-
-Contains:
-
-* Medical literature
-* Guidelines
-* Research summaries
-
----
-
-### Explanation Layer
-
-Generates explanations.
-
----
-
-# RATM Architecture
-
-```text
-Current Trend
-        │
-        ▼
-Temporal Embedding
-        │
-        ▼
-Retriever
-        │
- ┌──────┴──────┐
- ▼             ▼
-Historical   Clinical
-Memory       Knowledge
- │             │
- └──────┬──────┘
-        ▼
-Context Builder
-        ▼
-Explanation Generator
-```
+### Insight Generator
+Uses rule-based templating to synthesize the Clinical Memory into a human-readable Clinical Insight Report.
 
 ---
 
@@ -556,29 +274,13 @@ Explanation Generator
 
 Purpose:
 
-Represent respiratory states as vectors.
+Represent respiratory states as dense vectors.
 
----
+Output:
 
-Embedding Inputs
+`512-Dimensional Vector` (Extracted from the ResNet-18 Cough Detector).
 
-```text
-Trend Features
-
-Environmental Features
-
-Historical Features
-```
-
----
-
-Output
-
-```text
-512-Dimensional Vector
-```
-
-These vectors are stored inside the vector database.
+These vectors are stored inside the vector database and queried using Cosine Similarity.
 
 ---
 
@@ -589,137 +291,65 @@ Candidate Systems:
 ### TurboVec (Selected)
 
 Advantages:
-
-* Built on Google Research's TurboQuant algorithm (ICLR 2026)
-* No training step — data-oblivious quantization
-* 16x memory compression (4-bit) vs float32
-* 10-19% faster search than FAISS on ARM
-* Native filtered search (allowlist in SIMD kernel)
-* Online ingest — no index rebuilds
-* Rust core with Python bindings
+* Built on Google Research's TurboQuant algorithm.
+* No training step — data-oblivious quantization.
+* 16x memory compression (4-bit) vs float32.
+* 10-19% faster search than FAISS on ARM.
+* Ultra-lightweight and highly compatible with edge deployments.
 
 ### ChromaDB
-
-Advantages:
-
-* Metadata support
-* Easy API
+Advantages: Metadata support and easy API. (Rejected for V1 due to unnecessary overhead compared to TurboVec's raw speed).
 
 ---
 
-Decision
-
-Version 1:
-
-TurboVec
-
----
-
-# 12. Explanation Layer
+# 12. Clinical Insight Generator
 
 Purpose:
 
-Convert retrieved context into human-readable observations.
+Convert the retrieved context into an actionable, human-readable report for clinicians.
 
----
+Input:
+* Current Temporal Trajectory
+* Predicted Disease
+* Top-K Retrieved Historical Cases
 
-Input
-
-```text
-Current Pattern
-
-Retrieved Cases
-
-Environmental Data
-```
-
----
-
-Output
-
-Example:
-
-"Nighttime cough frequency increased by 24% compared to the previous week and resembles historical periods associated with elevated pollution exposure."
+Output:
+A structured text report detailing:
+* Narrative Summary
+* Severity Assessment (Low/Medium/High)
+* Specific Clinical Observations (e.g., "Nighttime coughing is highly prominent, typical of asthma presentations.")
 
 ---
 
 # 13. Model Evaluation Strategy
 
 ## Cough Detection
-
-Metrics:
-
-* Accuracy
-* Precision
-* Recall
-* F1 Score
-* ROC AUC
-
----
+Metrics: Accuracy, Precision, Recall, F1 Score, ROC AUC.
 
 ## Temporal Intelligence
+Metrics: Trend Classification Accuracy, Sequence Prediction Accuracy.
 
-Metrics:
-
-* Trend Classification Accuracy
-* Sequence Prediction Accuracy
-
----
+## Disease Classification
+Metrics: Multi-class F1 Score, Confusion Matrix.
 
 ## Retrieval Layer
-
-Metrics:
-
-* Retrieval Precision@K
-* Retrieval Recall@K
-
----
-
-## Explanation Layer
-
-Metrics:
-
-* Clinical Relevance
-* Explainability
-* Human Evaluation
+Metrics: Retrieval Precision@K, Retrieval Recall@K.
 
 ---
 
 # 14. Model Training Strategy
 
-Phase 1
+Phase 1: Train ResNet-18 Cough Detector & Extract Embeddings.
 
-Train CNN Detector
+Phase 2: Train Disease Classifier on Acoustic Embeddings.
 
----
+Phase 3: Generate Temporal Event Datasets.
 
-Phase 2
+Phase 4: Train Temporal Transformer.
 
-Generate Event Dataset
+Phase 5: Build TurboVec Retrieval Database with Historical Embeddings.
 
----
-
-Phase 3
-
-Train Temporal Transformer
-
----
-
-Phase 4
-
-Build Retrieval Database
-
----
-
-Phase 5
-
-Implement RATM
-
----
-
-Phase 6
-
-Generate Clinical Insights
+Phase 6: Implement RATM Pipeline (Memory Builder + Insight Generator).
 
 ---
 
@@ -727,35 +357,20 @@ Generate Clinical Insights
 
 Future versions may include:
 
+## Environmental Correlation Engine
+Integrating AQI, humidity, and temperature data as additional features for the Temporal Transformer.
+
 ## Audio Foundation Models
-
-* Wav2Vec2
-* Audio Spectrogram Transformer
-* BEATs
-
----
+Upgrading from ResNet-18 to large pre-trained audio models (e.g., Wav2Vec2, Audio Spectrogram Transformer, BEATs).
 
 ## Multi-Modal Learning
-
-Audio + Environment
-
----
-
-## Self-Supervised Learning
-
-Large-scale respiratory representation learning
+Fusing acoustic embeddings, temporal sequences, and environmental time-series into a single joint-embedding space.
 
 ---
 
-## Personalized Respiratory Foundation Models
+# 16. AI Architecture Summary
 
-Patient-specific adaptation
-
----
-
-# AI Architecture Summary
-
-PRISM uses a hierarchical intelligence architecture.
+PRISM uses a hierarchical intelligence architecture:
 
 ```text
 Audio
@@ -764,22 +379,25 @@ Audio
 Mel Spectrogram
    │
    ▼
-CNN Detector
+ResNet-18 Extractor
    │
-   ▼
-Event Generator
-   │
-   ▼
-Temporal Transformer
-   │
-   ▼
-Environmental Correlation
-   │
-   ▼
-RATM Engine
-   │
-   ▼
+   ├───────────┐
+   ▼           ▼
+Events     Embeddings
+   │           │
+   ▼           ▼
+Temporal    Disease Classifier &
+Transformer   TurboVec Retrieval
+   │           │
+   └─────┬─────┘
+         ▼
+    RATM Engine
+         │
+         ▼
 Clinical Insight Generation
+```
+
+This architecture balances practicality, research depth, computational feasibility, and clinical explainability while remaining highly scalable.ation
 ```
 
 This architecture balances practicality, research depth, computational feasibility, explainability, and future scalability while remaining achievable within a student-led research project.

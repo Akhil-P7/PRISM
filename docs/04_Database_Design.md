@@ -1,926 +1,179 @@
-# Database Design Document (V2)
+# Database Design Document
 
 # PRISM
 
 ## Pediatric Respiratory Intelligence System
 
-Version: 2.0
-
-Document Type: Database Design Specification
-
-Status: Official Architecture Version
+**Version:** 1.0
+**Document Type:** Database Design Specification
+**Status:** V1 Implementation & V2 Roadmap
 
 ---
 
 # 1. Purpose
 
-This document defines the complete database architecture for PRISM.
+This document defines the database architecture for PRISM.
 
 The database is designed to support:
-
-* Multi-dataset integration
+* Multi-dataset integration (e.g., COUGHVID, Coswara)
 * Audio processing pipelines
-* Cough event detection
-* Temporal respiratory intelligence
-* Environmental correlation analysis
 * Retrieval-Augmented Temporal Modeling (RATM)
-* Future healthcare deployment
 
 The architecture prioritizes:
-
 * Scalability
-* Explainability
 * Dataset traceability
-* Retrieval efficiency
+* Retrieval efficiency (Vector Search)
 * Future extensibility
 
 ---
 
-# 2. Database Philosophy
+# 2. Storage Architecture
 
-PRISM is not simply a cough detection system.
-
-It is a respiratory intelligence platform.
-
-Therefore the database must support the entire intelligence pipeline.
-
-Instead of storing only audio files and predictions, the database stores the complete evolution of information.
-
-```text
-Raw Dataset
-      ↓
-Recording
-      ↓
-Audio Segments
-      ↓
-Detected Events
-      ↓
-Temporal Features
-      ↓
-Predictions
-      ↓
-Insights
-      ↓
-Memory Objects
-```
-
-Every stage remains traceable.
-
----
-
-# 3. Architectural Principles
-
-The database follows five principles.
-
-## Dataset Agnostic
-
-The schema must support:
-
-* COUGHVID
-* Coswara
-* ICBHI
-* Future hospital datasets
-* Future wearable devices
-
-without redesign.
-
----
-
-## Traceability
-
-Every prediction should be traceable back to:
-
-* Source dataset
-* Recording
-* Audio segment
-* Detection event
-
----
-
-## Explainability
-
-The database must store enough information to explain why a model generated a prediction.
-
----
-
-## Retrieval Readiness
-
-The architecture must support similarity search and memory retrieval.
-
----
-
-## Longitudinal Analysis
-
-The schema must support temporal analysis across multiple recordings and subjects.
-
----
-
-# 4. Conceptual Data Model
-
-The core hierarchy of PRISM is:
-
-```text
-Dataset
-   │
-   ▼
-Subject
-   │
-   ▼
-Recording
-   │
-   ▼
-Segment
-   │
-   ▼
-Event
-   │
-   ▼
-Temporal Features
-   │
-   ▼
-Predictions
-   │
-   ▼
-Insights
-   │
-   ▼
-Memory Store
-```
-
-This hierarchy represents the complete respiratory intelligence lifecycle.
-
----
-
-# 5. Storage Architecture
-
-PRISM uses a hybrid storage architecture.
+PRISM uses a hybrid storage architecture tailored for V1.
 
 ## Relational Layer
-
-Technology:
-
-* SQLite (Development)
-* PostgreSQL (Production)
-
-Purpose:
-
-Store structured information.
-
----
+**Technology:** SQLite (Development) / PostgreSQL (Production) via SQLAlchemy
+**Purpose:** Store structured patient, dataset, and recording metadata.
 
 ## Vector Layer
-
-Technology:
-
-* TurboVec (Google's TurboQuant)
-
-Purpose:
-
-Store embeddings and retrieval memory.
-
----
+**Technology:** TurboVec (Google's TurboQuant) + CSV Metadata
+**Purpose:** Store 512-D acoustic embeddings and clinical metadata (age, gender, disease) for real-time similarity retrieval.
 
 ## File Storage Layer
-
-Purpose:
-
-Store audio files.
-
-Examples:
-
-```text
-audio/
-    coughvid/
-    coswara/
-    icbhi/
-```
-
-The database stores references, not raw files.
+**Technology:** Local / Cloud Filesystem
+**Purpose:** Store raw audio files (`.wav`, `.mp3`) and PyTorch model checkpoints (`.pt` tracked via Git LFS). The database stores file paths, not raw files.
 
 ---
 
-# 6. Core Entities
+# 3. Core Relational Entities (Implemented in V1)
+
+The following entities are fully implemented in the `backend/database/models/` using SQLAlchemy.
 
 ---
 
-# Entity 1: Dataset
+## Entity 1: Dataset
+Represents the source dataset (e.g., COUGHVID, Coswara).
 
-Represents the source dataset.
-
-Examples:
-
-* COUGHVID
-* Coswara
-* ICBHI
-
----
-
-Fields
-
+**Fields:**
 | Field       | Type      |
 | ----------- | --------- |
-| dataset_id  | UUID      |
+| id          | UUID (PK) |
 | name        | String    |
 | version     | String    |
-| source_url  | String    |
-| description | Text      |
-| created_at  | Timestamp |
+| description | String    |
+
+**Purpose:** Maintain dataset provenance and allow multi-dataset training/evaluation.
 
 ---
 
-Purpose
+## Entity 2: Subject
+Represents an individual participant from a dataset.
 
-Maintain dataset provenance.
+**Fields:**
+| Field                 | Type      |
+| --------------------- | --------- |
+| id                    | UUID (PK) |
+| dataset_id            | UUID (FK) |
+| source_subject_id     | String    |
+| age                   | Integer   |
+| gender                | String    |
+| respiratory_condition | String    |
+| has_fever             | Boolean   |
+| is_smoker             | Boolean   |
 
----
+**Relationships:**
+* Belongs to 1 `Dataset`.
+* Has Many `Recordings`.
 
-# Entity 2: Subject
-
-Represents an individual participant.
-
-A subject may originate from:
-
-* COUGHVID
-* Coswara
-* ICBHI
-* Future deployment users
-
----
-
-Fields
-
-| Field             | Type      |
-| ----------------- | --------- |
-| subject_id        | UUID      |
-| dataset_id        | UUID      |
-| source_subject_id | String    |
-| age               | Integer   |
-| age_group         | String    |
-| gender            | String    |
-| country           | String    |
-| region            | String    |
-| health_status     | String    |
-| created_at        | Timestamp |
+**Purpose:** Provide a unified representation of participants across disparate public datasets.
 
 ---
 
-Purpose
+## Entity 3: Recording
+Represents a single audio recording associated with a subject.
 
-Provide a unified representation of participants across datasets.
-
----
-
-# Entity 3: Recording
-
-Represents a single audio recording.
-
----
-
-Fields
-
-| Field               | Type      |
-| ------------------- | --------- |
-| recording_id        | UUID      |
-| subject_id          | UUID      |
-| dataset_id          | UUID      |
-| file_path           | String    |
-| duration            | Float     |
-| sample_rate         | Integer   |
-| channels            | Integer   |
-| recording_type      | String    |
-| recording_timestamp | Timestamp |
-
----
-
-Examples
-
-```text
-Cough
-
-Breathing
-
-Speech
-
-Vowel
-
-Counting
-```
-
----
-
-# Entity 4: Segment
-
-Represents a portion of an audio recording.
-
----
-
-Fields
-
-| Field        | Type  |
-| ------------ | ----- |
-| segment_id   | UUID  |
-| recording_id | UUID  |
-| start_time   | Float |
-| end_time     | Float |
-| duration     | Float |
-| confidence   | Float |
-
----
-
-Purpose
-
-Allow event detection on manageable audio windows.
-
----
-
-# Entity 5: Event
-
-Represents a detected respiratory event.
-
-Version 1 focuses on cough detection.
-
----
-
-Fields
-
-| Field      | Type      |
-| ---------- | --------- |
-| event_id   | UUID      |
-| segment_id | UUID      |
-| event_type | String    |
-| timestamp  | Timestamp |
-| duration   | Float     |
-| intensity  | Float     |
-| confidence | Float     |
-
----
-
-Supported Events
-
-Version 1
-
-```text
-Cough
-```
-
-Future
-
-```text
-Wheeze
-
-Crackle
-
-Breathing Anomaly
-```
-
----
-
-# 7. Feature Store Layer
-
-A dedicated feature store supports temporal intelligence.
-
----
-
-# Entity 6: Temporal Features
-
-Generated by the Temporal Transformer pipeline.
-
----
-
-Fields
-
-| Field              | Type      |
-| ------------------ | --------- |
-| feature_id         | UUID      |
-| subject_id         | UUID      |
-| recording_id       | UUID      |
-| cough_count        | Integer   |
-| avg_duration       | Float     |
-| avg_intensity      | Float     |
-| night_ratio        | Float     |
-| peak_hour          | Integer   |
-| cough_burden_score | Float     |
-| generated_at       | Timestamp |
-
----
-
-Purpose
-
-Store aggregated respiratory behavior.
-
----
-
-Example
-
-```text
-Total Coughs: 32
-
-Average Duration: 1.4 sec
-
-Night Ratio: 0.68
-```
-
----
-
-# 8. Environmental Intelligence Layer
-
-Stores environmental context.
-
----
-
-# Entity 7: Environmental Data
-
----
-
-Fields
-
-| Field             | Type      |
-| ----------------- | --------- |
-| environment_id    | UUID      |
-| recording_id      | UUID      |
-| AQI               | Integer   |
-| temperature       | Float     |
-| humidity          | Float     |
-| weather_condition | String    |
-| timestamp         | Timestamp |
-
----
-
-Future Fields
-
-```text
-PM2.5
-
-PM10
-
-Pollen
-
-Dust Index
-```
-
----
-
-Purpose
-
-Enable environmental correlation analysis.
-
----
-
-# 9. Prediction Layer
-
-Stores outputs from AI models.
-
----
-
-# Entity 8: Predictions
-
----
-
-Fields
-
-| Field         | Type      |
-| ------------- | --------- |
-| prediction_id | UUID      |
-| subject_id    | UUID      |
-| recording_id  | UUID      |
-| trend_class   | String    |
-| risk_score    | Float     |
-| confidence    | Float     |
-| generated_at  | Timestamp |
-
----
-
-Trend Classes
-
-```text
-Stable
-
-Improving
-
-Increasing
-
-Abnormal
-```
-
----
-
-Purpose
-
-Persist model outputs.
-
----
-
-# 10. Insight Layer
-
-Stores explainable AI outputs.
-
----
-
-# Entity 9: Insights
-
----
-
-Fields
-
-| Field         | Type      |
-| ------------- | --------- |
-| insight_id    | UUID      |
-| prediction_id | UUID      |
-| insight_text  | Text      |
-| generated_at  | Timestamp |
-
----
-
-Example
-
-```text
-Nighttime cough burden increased by 22%
-compared to previous observations.
-```
-
----
-
-Purpose
-
-Maintain explainability records.
-
----
-
-# 11. Retrieval-Augmented Temporal Modeling Layer
-
-This is the core research contribution of PRISM.
-
----
-
-# Entity 10: Memory Objects
-
-Represents retrievable respiratory experiences.
-
----
-
-Fields
-
+**Fields:**
 | Field        | Type      |
 | ------------ | --------- |
-| memory_id    | UUID      |
-| subject_id   | UUID      |
-| recording_id | UUID      |
-| summary      | Text      |
-| embedding_id | String    |
-| created_at   | Timestamp |
+| id           | UUID (PK) |
+| subject_id   | UUID (FK) |
+| file_path    | String    |
+| duration     | Float     |
+| equipment    | String    |
+| is_cough     | Boolean   |
+
+**Relationships:**
+* Belongs to 1 `Subject`.
+
+**Purpose:** Track the actual audio files used for inference and training.
 
 ---
 
-Example Summary
+# 4. Vector Database Design (Implemented in V1)
 
-```text
-High AQI
+The vector database stores semantic representations of the audio to power the RATM pipeline.
 
-Elevated nighttime coughing
+**Technology:** TurboVec
+**Index:** `.tq` (TurboQuant quantized index)
+**Metadata:** `embeddings_metadata.csv`
 
-Moderate respiratory risk
-```
+**Embedding Sources:**
+Extracted from the ResNet-18 Cough Detector's Global Average Pooling layer.
 
----
-
-Purpose
-
-Support retrieval of similar respiratory situations.
-
----
-
-# 12. Vector Database Design
-
-The vector database stores semantic representations.
-
----
-
-Embedding Sources
-
-```text
-Temporal Features
-
-Environmental Features
-
-Predictions
-
-Historical Trends
-```
-
----
-
-Embedding Dimension
-
-Version 1
-
-```text
+**Embedding Dimension:**
 512 Dimensions
-```
 
----
-
-Similarity Metric
-
-```text
+**Similarity Metric:**
 Cosine Similarity
-```
+
+**Purpose:**
+Retrieve historically similar patient cases based on acoustic signatures to ground the Clinical Insight Generator with evidence.
 
 ---
 
-Purpose
+# 5. Future Expansion (V2 Roadmap)
 
-Retrieve:
+While V1 handles event detection, temporal feature extraction, predictions, and insight generation in-memory during inference, V2 will introduce the following entities to the Relational Layer to persist the entire intelligence lifecycle for longitudinal tracking.
 
-* Similar respiratory episodes
-* Similar environmental patterns
-* Similar cough progression trends
+## Entity: Segment
+Represents a specific window of time within a `Recording` (e.g., 0.5s to 3.5s).
+* Fields: `start_time`, `end_time`, `duration`, `confidence`
+
+## Entity: Event
+Represents a detected respiratory event (e.g., Cough).
+* Fields: `event_type`, `timestamp`, `duration`, `intensity`, `confidence`
+
+## Entity: Temporal Features
+Generated by the Temporal Transformer pipeline.
+* Fields: `cough_count`, `avg_duration`, `avg_intensity`, `night_ratio`, `peak_hour`
+
+## Entity: Environmental Data
+Stores environmental context for correlation analysis.
+* Fields: `AQI`, `temperature`, `humidity`, `weather_condition`
+
+## Entity: Predictions
+Stores outputs from the AI models.
+* Fields: `trend_class` (Stable, Improving, Increasing, Abnormal), `risk_score`
+
+## Entity: Insights & Memory Objects
+Stores the final explainable AI outputs generated by the RATM pipeline.
+* Fields: `insight_text`, `summary`
 
 ---
 
-# 13. Entity Relationships
+# 6. Entity Relationships (V1 Summary)
 
+```text
 Dataset
-
-```text
-1 → Many Subjects
-```
-
----
-
+   │
+   ▼ (1 to Many)
 Subject
-
-```text
-1 → Many Recordings
-```
-
----
-
+   │
+   ▼ (1 to Many)
 Recording
-
-```text
-1 → Many Segments
-
-1 → Many Environmental Records
-
-1 → Many Feature Records
+   │
+   ▼ (File Path Reference)
+Filesystem (.wav)
 ```
 
----
-
-Segment
-
-```text
-1 → Many Events
-```
-
----
-
-Prediction
-
-```text
-1 → Many Insights
-```
-
----
-
-Memory Object
-
-```text
-1 → 1 Vector Embedding
-```
-
----
-
-# 14. Data Lifecycle
-
-Stage 1
-
-Dataset Imported
-
-↓
-
-Dataset Record Created
-
----
-
-Stage 2
-
-Subject Created
-
-↓
-
-Recording Created
-
----
-
-Stage 3
-
-Audio Segmentation
-
-↓
-
-Segment Records Created
-
----
-
-Stage 4
-
-CNN Detection
-
-↓
-
-Event Records Created
-
----
-
-Stage 5
-
-Feature Engineering
-
-↓
-
-Temporal Features Stored
-
----
-
-Stage 6
-
-Transformer Analysis
-
-↓
-
-Predictions Generated
-
----
-
-Stage 7
-
-Insight Generation
-
-↓
-
-Insights Stored
-
----
-
-Stage 8
-
-Memory Construction
-
-↓
-
-Embeddings Stored
-
----
-
-# 15. Indexing Strategy
-
-High-priority indexes:
-
----
-
-Datasets
-
-```sql
-dataset_id
-```
-
----
-
-Subjects
-
-```sql
-subject_id
-dataset_id
-```
-
----
-
-Recordings
-
-```sql
-recording_id
-subject_id
-```
-
----
-
-Events
-
-```sql
-event_id
-timestamp
-```
-
----
-
-Temporal Features
-
-```sql
-subject_id
-recording_id
-```
-
----
-
-Predictions
-
-```sql
-subject_id
-risk_score
-```
-
----
-
-Memory Objects
-
-```sql
-memory_id
-```
-
----
-
-# 16. Future Healthcare Extensions
-
-Future versions may introduce:
-
-## Patient Entity
-
-For real-world deployment.
-
----
-
-## Medication Records
-
-```text
-Medication
-
-Dosage
-
-Schedule
-```
-
----
-
-## Clinical Diagnosis
-
-```text
-Asthma
-
-COPD
-
-Pneumonia
-```
-
----
-
-## Hospital Integration
-
-```text
-Electronic Health Records
-```
-
----
-
-## Wearable Device Support
-
-```text
-Microphone Streams
-
-Sensor Data
-
-Realtime Monitoring
-```
-
----
-
-# 17. Database Summary
-
-PRISM adopts a layered database architecture.
-
-```text
-Dataset Layer
-        │
-        ▼
-Subject Layer
-        │
-        ▼
-Recording Layer
-        │
-        ▼
-Event Layer
-        │
-        ▼
-Feature Store Layer
-        │
-        ▼
-Prediction Layer
-        │
-        ▼
-Insight Layer
-        │
-        ▼
-Memory Layer
-```
-
-This architecture supports dataset integration, temporal intelligence, environmental analysis, explainable AI, and Retrieval-Augmented Temporal Modeling while remaining scalable enough for future healthcare deployment.
+This architecture ensures V1 remains lightweight and performant, utilizing SQL for patient metadata and TurboVec for high-speed acoustic retrieval, while maintaining a clear roadmap for V2's deep longitudinal tracking.

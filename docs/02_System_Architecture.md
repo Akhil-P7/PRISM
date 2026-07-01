@@ -5,7 +5,6 @@
 ## Pediatric Respiratory Intelligence System
 
 **Version:** 1.0
-
 **Document Type:** System Architecture Specification
 
 ---
@@ -14,629 +13,212 @@
 
 The purpose of this document is to define the overall architecture of the PRISM platform, identify its major software components, describe the interaction between modules, and establish a scalable foundation for future expansion.
 
-The architecture follows a modular design philosophy where each subsystem can be developed, tested, and upgraded independently.
+The architecture follows a modular design philosophy where each subsystem can be developed, tested, and upgraded independently. PRISM specializes in **Retrieval-Augmented Temporal Modeling (RATM)**, providing actionable clinical insights rather than simple black-box predictions.
 
 ---
 
 # 2. Architectural Principles
 
-The PRISM architecture is designed around five core principles.
+The PRISM architecture is designed around five core principles:
 
 ## Modularity
-
-Every major subsystem should function independently.
-
-Example:
-
-* Audio Processing
-* AI Models
-* Database
-* Retrieval Engine
-
-should all be replaceable without affecting the rest of the platform.
-
----
+Every major subsystem functions independently. The Audio Processing, AI Models (Cough Detector, Temporal Transformer, Disease Classifier), Database, and Retrieval Engine are loosely coupled.
 
 ## Scalability
-
-The architecture should support:
-
-* Larger datasets
-* Multiple users
-* Future edge devices
-* Cloud deployment
-
----
+The architecture supports processing large datasets of audio recordings, efficient vector search across millions of embeddings using TurboVec, and containerized deployment (e.g., Docker, Hugging Face Spaces).
 
 ## Explainability
-
-The AI system should produce interpretable outputs instead of black-box predictions.
-
----
+The AI system produces interpretable outputs (Clinical Insights). Instead of just predicting a disease, it retrieves historical similar cases and provides a temporal trajectory to justify its assessments.
 
 ## Research Friendliness
-
-The platform should allow rapid experimentation with:
-
-* New datasets
-* New AI models
-* New retrieval methods
-
----
+The platform allows rapid experimentation with new datasets, model checkpoints, and retrieval mechanisms.
 
 ## Future Hardware Integration
-
-The software architecture should allow future microphone and sensor devices to be attached without major redesign.
+The software architecture separates ingestion from inference, allowing future edge microphones and environmental sensors to be integrated seamlessly.
 
 ---
 
 # 3. High-Level Architecture
 
 ```text
-                    User
-                      │
-                      ▼
-              Dashboard Interface
-                      │
-                      ▼
-                 Backend API
-                      │
-      ┌───────────────┼────────────────┐
-      ▼               ▼                ▼
-Audio Engine   Temporal Engine   Retrieval Engine
-      │               │                │
-      └───────────────┼────────────────┘
-                      ▼
-                Data Storage
-                      │
-                      ▼
-               External Sources
+                     User (Clinician/Researcher)
+                               │
+                               ▼
+                    Streamlit Dashboard (Frontend)
+                               │
+                               ▼
+                      FastAPI Backend API
+                               │
+       ┌───────────────────────┼───────────────────────┐
+       ▼                       ▼                       ▼
+ Audio Engine          Temporal Engine          RATM Pipeline
+(Spectrograms)    (Trajectory Prediction)   (Retrieval & Insights)
+       │                       │                       │
+       └───────────────────────┼───────────────────────┘
+                               ▼
+                       Data Storage Layer
+                (PostgreSQL, TurboVec Index, Files)
 ```
 
 ---
 
 # 4. Major System Modules
 
-The PRISM platform consists of six primary modules.
+The PRISM platform consists of six primary modules reflecting Version 1.0 of the codebase.
 
 ---
 
-## Module 1
+## Module 1: Audio Processing Engine
 
-# Audio Processing Engine
+**Purpose:** Preprocess raw respiratory audio files into features suitable for deep learning models.
 
-## Responsibilities
-
-* Audio loading
-* Audio normalization
-* Noise reduction
-* Audio segmentation
-* Spectrogram generation
+**Workflow:**
+1. **Loader:** Loads WAV, MP3, FLAC, or OGG files.
+2. **Preprocessor:** Resamples audio (e.g., to 16kHz) and normalizes volume.
+3. **Segmenter:** Splits continuous audio into discrete segments (e.g., 3 seconds) with optional overlap.
+4. **Feature Generator:** Converts audio waveforms into Mel Spectrograms (using `librosa`) and Log-Mel features.
 
 ---
 
-## Input
+## Module 2: Cough Detection Engine
 
-```text
-WAV
-MP3
-FLAC
-```
+**Purpose:** Detect cough events from processed audio segments and extract deep acoustic embeddings.
 
----
-
-## Output
-
-```text
-Processed Audio
-
-Mel Spectrogram
-
-Feature Metadata
-```
+**Architecture:**
+- **Model:** ResNet-18 CNN backbone.
+- **Input:** Mel Spectrograms.
+- **Outputs:**
+  1. Cough Probability (Binary Classification).
+  2. 512-dimensional acoustic embedding (used for both disease classification and similar case retrieval).
 
 ---
 
-## Internal Components
+## Module 3: Temporal Intelligence Engine
 
-```text
-Loader
+**Purpose:** Analyze how cough behavior changes over time to predict clinical trajectories.
 
-↓
-
-Preprocessor
-
-↓
-
-Segmenter
-
-↓
-
-Feature Generator
-```
+**Architecture:**
+- **Model:** Temporal Transformer.
+- **Input:** 30-day temporal feature sequences (e.g., cough frequency, duration, intensity, nighttime ratio, inter-cough interval).
+- **Output:** Predicts one of four respiratory trajectories:
+  - `Stable`: Consistent cough pattern.
+  - `Improving`: Cough frequency decreasing.
+  - `Increasing`: Cough frequency rising.
+  - `Abnormal`: Irregular spikes detected.
 
 ---
 
-# Module 2
+## Module 4: Disease Classification Engine
 
-## Cough Detection Engine
+**Purpose:** Predict specific respiratory conditions based on acoustic signatures.
 
-Purpose:
-
-Detect cough events from processed audio.
-
----
-
-### Workflow
-
-```text
-Mel Spectrogram
-
-↓
-
-CNN Detector
-
-↓
-
-Classification
-
-↓
-
-Cough Event
-```
+**Architecture:**
+- **Model:** Disease Classifier Head (Multi-class classification).
+- **Input:** 512-dimensional embeddings generated by the Cough Detection Engine.
+- **Output:** Probability distribution across known respiratory diseases (e.g., Asthma, Bronchitis, Pneumonia, Pertussis).
 
 ---
 
-### Output
+## Module 5: Retrieval-Augmented Temporal Modeling (RATM) Engine
 
-Each event contains:
+**Purpose:** Generate evidence-backed, human-readable clinical insights.
 
-```text
-Timestamp
-
-Confidence
-
-Duration
-
-Intensity
-```
+**Components:**
+1. **TurboVec Vector Store:** A highly optimized semantic search engine storing historical patient embeddings and metadata.
+2. **Retrieval Engine:** Queries TurboVec to find the top-$K$ historical cases most acoustically and temporally similar to the current patient.
+3. **Memory Builder:** Assembles current patient stats, the predicted trajectory, and retrieved similar cases into a structured "Clinical Memory."
+4. **Insight Generator:** Applies deterministic rule-based templates to the Clinical Memory to generate a detailed clinical narrative, severity assessment, and specific observation alerts.
 
 ---
 
-# Module 3
+## Module 6: API and Visualization Layer
 
-## Temporal Intelligence Engine
+**Backend API (FastAPI):**
+- Exposes RESTful endpoints for the RATM pipeline (`/api/v1/insights/generate` and `/api/v1/insights/demo`).
+- Manages singleton model instances for efficient inference.
 
-Purpose:
-
-Analyze how cough behavior changes over time.
-
----
-
-### Input
-
-```text
-Cough Events
-```
+**Frontend Dashboard (Streamlit):**
+- Provides interactive UI for audio recording, file uploading, and viewing AI-generated Clinical Assessment Reports.
+- Displays temporal trends and retrieved similar patient data.
 
 ---
 
-### Temporal Features
-
-* Daily frequency
-
-* Weekly frequency
-
-* Monthly frequency
-
-* Peak coughing periods
-
-* Nighttime cough ratio
-
-* Event intensity averages
-
----
-
-### Workflow
-
-```text
-Event Log
-
-↓
-
-Feature Engineering
-
-↓
-
-Temporal Transformer
-
-↓
-
-Trend Analysis
-```
-
----
-
-### Output
-
-```text
-Increasing Trend
-
-Stable Trend
-
-Abnormal Spike
-
-Pattern Summary
-```
-
----
-
-# Module 4
-
-## Environmental Correlation Engine
-
-Purpose:
-
-Understand the effect of environmental conditions on respiratory behavior.
-
----
-
-### Input
-
-```text
-AQI
-
-Temperature
-
-Humidity
-```
-
----
-
-### Output
-
-```text
-Environmental Correlation Score
-
-Potential Trigger Detection
-
-Risk Indicators
-```
-
----
-
-### Future Expansion
-
-Additional inputs:
-
-* Dust concentration
-
-* Pollen
-
-* Seasonal changes
-
----
-
-# Module 5
-
-## Retrieval-Augmented Intelligence Engine
-
-Purpose:
-
-Provide explainable AI outputs.
-
----
-
-## Components
-
-### Historical Memory
-
-Stores:
-
-* Previous observations
-
-* Model outputs
-
-* Trend summaries
-
----
-
-### Vector Database
-
-Stores semantic embeddings.
-
----
-
-### Retrieval Engine
-
-Finds:
-
-* Similar historical cases
-
-* Similar cough patterns
-
-* Similar environmental conditions
-
----
-
-### LLM Layer
-
-Generates explanations.
-
-Example:
-
-"This week's respiratory behavior resembles previous periods associated with elevated pollution levels."
-
----
-
-# Module 6
-
-## Visualization Layer
-
-Purpose:
-
-Present information clearly.
-
----
-
-### Dashboard Sections
-
-#### Home
-
-* Total cough count
-
-* Daily statistics
-
----
-
-#### Trends
-
-* Weekly analysis
-
-* Monthly analysis
-
----
-
-#### Environment
-
-* AQI
-
-* Humidity
-
-* Temperature
-
----
-
-#### AI Insights
-
-* Retrieved cases
-
-* Trend explanations
-
-* Pattern summaries
-
----
-
-# 5. Data Flow
-
-The complete system workflow is:
-
-```text
-Raw Audio
-     │
-     ▼
-Audio Processing
-     │
-     ▼
-Spectrogram Generation
-     │
-     ▼
-CNN Detector
-     │
-     ▼
-Cough Event Log
-     │
-     ▼
-Temporal Transformer
-     │
-     ├──────────────┐
-     ▼              ▼
-Environment     Historical Memory
-     │              │
-     └──────┬───────┘
-            ▼
-      Retrieval Engine
-            ▼
-      LLM Explanation
-            ▼
-    Dashboard & Reports
-```
+# 5. Data Flow Workflow
+
+1. **Ingestion:** User records or uploads audio via the Streamlit frontend.
+2. **Acoustic Analysis:** The audio is sent to the FastAPI backend, processed into spectrograms, and fed to the **Cough Detector (ResNet-18)**. Coughs are identified and a 512-D embedding is extracted.
+3. **Temporal Analysis:** (Requires 30 days of data or demo mode) The **Temporal Transformer** evaluates the longitudinal pattern and predicts a trajectory.
+4. **Disease Classification:** The embedding is passed to the **Disease Classifier** to predict underlying conditions.
+5. **Retrieval:** The embedding and trajectory are used by the **Retrieval Engine** to search the TurboVec index for similar historical cases.
+6. **Insight Generation:** The **Memory Builder** and **Insight Generator** synthesize all findings into a structured Clinical Insight Report.
+7. **Presentation:** The frontend renders the report, highlighting severity, observations, and trajectory probabilities.
 
 ---
 
 # 6. Data Storage Layer
 
-The architecture uses four logical storage units.
+The architecture uses specific storage strategies for different data types.
 
----
+## Relational Database (PostgreSQL / SQLite)
+Managed via SQLAlchemy and Alembic migrations.
+- Stores Patient Metadata.
+- Stores Cough Event Logs and Temporal Statistics.
+- Stores System Configuration.
 
-## Audio Repository
+## Vector Store (TurboVec)
+- **Files:** `.tq` (TurboQuant index) and `.csv` metadata files.
+- Stores high-dimensional acoustic embeddings mapped to patient IDs for ultra-fast $K$-NN retrieval.
 
-Stores:
-
-* Audio files
-
-* Dataset references
-
----
-
-## Event Repository
-
-Stores:
-
-* Cough events
-
-* Time series
-
----
-
-## Environment Repository
-
-Stores:
-
-* AQI
-
-* Humidity
-
-* Temperature
-
----
-
-## Vector Memory Repository
-
-Stores:
-
-* Embeddings
-
-* Historical summaries
-
-* Retrieved knowledge
+## File Storage (Local / Cloud)
+- Stores raw audio recordings, PyTorch model checkpoints (`.pt`), and serialized configurations.
 
 ---
 
 # 7. External Dependencies
 
-## AI Libraries
-
-* PyTorch
-
-* Torchaudio
-
-* Librosa
+- **AI/ML:** PyTorch, Torchaudio, Librosa, Scikit-learn, Pandas, NumPy.
+- **Backend:** FastAPI, Uvicorn, Pydantic, SQLAlchemy.
+- **Frontend:** Streamlit, Plotly.
+- **Vector Search:** TurboVec.
 
 ---
 
-## Backend
+# 8. Future Architectural Evolution
 
-* FastAPI
+While Version 1.0 establishes a robust foundation, future iterations may include:
 
----
-
-## Visualization
-
-* Streamlit
-
----
-
-## Vector Search
-
-* TurboVec (powered by Google's TurboQuant)
-
----
-
-## Data Processing
-
-* NumPy
-
-* Pandas
-
----
-
-# 8. Development Strategy
-
-The architecture will be implemented incrementally.
-
----
-
-## Stage 1
-
-Audio Processing Engine
-
----
-
-## Stage 2
-
-CNN Cough Detection
-
----
-
-## Stage 3
-
-Temporal Intelligence
-
----
-
-## Stage 4
-
-Environmental Correlation
-
----
-
-## Stage 5
-
-Retrieval-Augmented Intelligence
-
----
-
-## Stage 6
-
-Dashboard Integration
-
----
-
-# 9. Future Architectural Evolution
-
-Future versions may include:
+## Environmental Correlation Engine
+Integrating external APIs (AQI, Humidity, Temperature, Pollen) to correlate respiratory events with environmental triggers.
 
 ## Edge Device Layer
+Deploying quantized models to microcontrollers, wearables, or mobile devices for real-time offline cough detection.
 
-Microphones
-
-Environmental sensors
-
-Wearable devices
+## Healthcare Integration (EHR)
+Adding FHIR/HL7 compatibility to sync PRISM insights directly with hospital Electronic Health Records and clinical decision support systems.
 
 ---
 
-## Cloud Infrastructure
+# 9. Architectural Summary
 
-Remote data synchronization
-
-Centralized monitoring
-
----
-
-## Healthcare Integration
-
-Electronic Health Records
-
-Hospital dashboards
-
-Clinical decision support
-
----
-
-# 10. Architectural Summary
-
-PRISM follows a layered AI architecture.
+PRISM utilizes a highly specialized, layered AI architecture tailored for respiratory intelligence:
 
 ```text
-Presentation Layer
+Presentation Layer       (Streamlit)
           │
           ▼
-Application Layer
+Application API Layer    (FastAPI)
           │
           ▼
-Audio Intelligence Layer
+Acoustic Layer           (ResNet-18 + Librosa + Disease Classifier)
           │
           ▼
-Temporal Intelligence Layer
+Temporal Layer           (Temporal Transformer)
           │
           ▼
-Retrieval Intelligence Layer
+Retrieval Layer          (TurboVec + RATM Memory & Insight Generator)
           │
           ▼
-Data Storage Layer
+Data Storage Layer       (PostgreSQL, LFS Checkpoints)
 ```
 
-This architecture ensures that the project remains modular, scalable, explainable, and suitable for future research and healthcare applications.
+This architecture ensures that the project remains modular, scalable, explainable, and primed for advanced clinical research.

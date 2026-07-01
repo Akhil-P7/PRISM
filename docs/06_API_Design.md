@@ -4,28 +4,17 @@
 
 ## Pediatric Respiratory Intelligence System
 
-Version: 1.0
-
-Document Type: API Specification
-
-Architecture Style: REST API
-
-Framework: FastAPI
-
-Data Format: JSON
+**Version:** 1.0
+**Document Type:** API Specification
+**Architecture Style:** REST API
+**Framework:** FastAPI
+**Data Format:** JSON
 
 ---
 
 # 1. Purpose
 
-This document defines the communication layer between:
-
-* Frontend Dashboard
-* AI Services
-* Database
-* Retrieval Engine
-
-The API follows a service-oriented architecture.
+This document defines the communication layer between the Frontend Dashboard, AI Services, Database, and Retrieval Engine. The API follows a service-oriented architecture.
 
 ---
 
@@ -37,607 +26,124 @@ Frontend
      ▼
  FastAPI Gateway
      │
- ┌───┼───────────┐
- ▼   ▼           ▼
-Data AI      Retrieval
-API  API      API
+ ┌───┴───────────┐
+ ▼               ▼
+Retrieval      Insight
+   API           API
 ```
 
 ---
 
-# 3. Service Categories
+# 3. Implemented Services (Version 1.0)
 
-The API is divided into:
-
-### Dataset APIs
-
-Manage datasets.
-
-### Recording APIs
-
-Manage audio recordings.
-
-### Event APIs
-
-Manage cough events.
-
-### Analytics APIs
-
-Temporal analysis.
-
-### Retrieval APIs
-
-RATM engine.
-
-### Insight APIs
-
-Clinical explanations.
+The V1 backend (`backend/main.py`) exposes the core RATM (Retrieval-Augmented Temporal Modeling) functionalities via two primary routers.
 
 ---
 
-# 4. Dataset APIs
+## 3.1 Retrieval APIs (`/api/v1/retrieval`)
 
----
+Responsible for querying the TurboVec Vector Database and managing the acoustic embeddings memory store.
 
-## Get Datasets
+### Create Embedding
+POST `/api/v1/retrieval/embed`
+Generates a 512-D acoustic embedding from an audio file.
 
-GET
-
-```http
-/api/v1/datasets
-```
-
-Response
-
-```json
-[
-  {
-    "id":"1",
-    "name":"COUGHVID"
-  }
-]
-```
-
----
-
-## Get Dataset Details
-
-GET
-
-```http
-/api/v1/datasets/{dataset_id}
-```
-
----
-
-# 5. Subject APIs
-
----
-
-## Get Subjects
-
-GET
-
-```http
-/api/v1/subjects
-```
-
----
-
-## Get Subject
-
-GET
-
-```http
-/api/v1/subjects/{subject_id}
-```
-
-Response
-
+### Search Similar Sessions
+POST `/api/v1/retrieval/search`
+Queries TurboVec to find historically similar patient cases based on the acoustic embedding.
+**Response:**
 ```json
 {
-  "subject_id":"123",
-  "age_group":"Adult",
-  "gender":"Male"
-}
-```
-
----
-
-# 6. Recording APIs
-
----
-
-## Upload Recording
-
-POST
-
-```http
-/api/v1/recordings
-```
-
-Body
-
-```json
-{
-  "file":"audio.wav"
-}
-```
-
----
-
-## Get Recording
-
-GET
-
-```http
-/api/v1/recordings/{recording_id}
-```
-
----
-
-## List Recordings
-
-GET
-
-```http
-/api/v1/recordings
-```
-
-Filters
-
-```text
-dataset
-subject
-date
-```
-
----
-
-# 7. Audio Processing APIs
-
----
-
-## Process Recording
-
-POST
-
-```http
-/api/v1/audio/process
-```
-
-Purpose
-
-Generate:
-
-* Spectrogram
-* Metadata
-
-Response
-
-```json
-{
-  "recording_id":"123",
-  "status":"processed"
-}
-```
-
----
-
-## Generate Spectrogram
-
-POST
-
-```http
-/api/v1/audio/spectrogram
-```
-
-Response
-
-```json
-{
-  "spectrogram_path":"..."
-}
-```
-
----
-
-# 8. Cough Detection APIs
-
----
-
-## Detect Events
-
-POST
-
-```http
-/api/v1/detection/cough
-```
-
-Response
-
-```json
-{
-  "events_detected":12
-}
-```
-
----
-
-## Get Events
-
-GET
-
-```http
-/api/v1/events
-```
-
-Filters
-
-```text
-recording_id
-subject_id
-```
-
----
-
-## Event Details
-
-GET
-
-```http
-/api/v1/events/{event_id}
-```
-
----
-
-# 9. Temporal Intelligence APIs
-
----
-
-## Generate Temporal Features
-
-POST
-
-```http
-/api/v1/temporal/features
-```
-
-Response
-
-```json
-{
-  "cough_count":24,
-  "night_ratio":0.61
-}
-```
-
----
-
-## Trend Analysis
-
-POST
-
-```http
-/api/v1/temporal/analyze
-```
-
-Response
-
-```json
-{
-  "trend":"Increasing"
-}
-```
-
----
-
-## Temporal Summary
-
-GET
-
-```http
-/api/v1/temporal/{subject_id}
-```
-
----
-
-# 10. Environmental APIs
-
----
-
-## Add Environment Data
-
-POST
-
-```http
-/api/v1/environment
-```
-
----
-
-## Get Environment Data
-
-GET
-
-```http
-/api/v1/environment/{recording_id}
-```
-
----
-
-## Correlation Analysis
-
-POST
-
-```http
-/api/v1/environment/correlation
-```
-
-Response
-
-```json
-{
-  "aqi_correlation":0.71
-}
-```
-
----
-
-# 11. Retrieval APIs
-
----
-
-## Create Embedding
-
-POST
-
-```http
-/api/v1/retrieval/embed
-```
-
----
-
-## Search Similar Sessions
-
-POST
-
-```http
-/api/v1/retrieval/search
-```
-
-Response
-
-```json
-{
-  "matches":[
-      {
-        "score":0.91
-      }
+  "matches": [
+    {
+      "memory_id": "uuid",
+      "score": 0.91,
+      "metadata": {}
+    }
   ]
 }
 ```
 
----
+### Store Memory
+POST `/api/v1/retrieval/memory`
+Stores a new clinical memory into the database and updates the TurboVec index.
 
-## Store Memory
-
-POST
-
-```http
-/api/v1/retrieval/memory
-```
+### Get Memory
+GET `/api/v1/retrieval/memory/{memory_id}`
+Retrieves details of a specific clinical memory.
 
 ---
 
-## Get Memory
+## 3.2 Insight APIs (`/api/v1/insights`)
 
-GET
+Responsible for generating explainable clinical observations using the context retrieved from TurboVec.
 
-```http
-/api/v1/retrieval/memory/{memory_id}
-```
-
----
-
-# 12. Insight APIs
-
----
-
-## Generate Insight
-
-POST
-
-```http
-/api/v1/insights/generate
-```
-
-Response
-
+### Generate Insight
+POST `/api/v1/insights/generate`
+Generates a human-readable insight report using the patient's temporal trajectory, disease prediction, and retrieved historical cases.
+**Response:**
 ```json
 {
-  "insight":
-  "Night cough burden increased..."
+  "insight": "Nighttime cough frequency is highly prominent, typical of asthma presentations, and matches 3 historical cases..."
 }
 ```
 
----
+### Get Insights
+GET `/api/v1/insights`
+Retrieves a list of previously generated clinical insights.
 
-## Get Insights
-
-GET
-
-```http
-/api/v1/insights
-```
+### Get Insight
+GET `/api/v1/insights/{insight_id}`
+Retrieves a specific insight by ID.
 
 ---
 
-## Get Insight
+# 4. Future Expansion (V2 API Roadmap)
 
-GET
+While V1 runs audio processing, cough detection, and temporal intelligence dynamically within the application pipeline (or via CLI scripts), V2 will expose these as dedicated REST microservices to support external integrations.
 
-```http
-/api/v1/insights/{insight_id}
-```
+### Dataset & Recording APIs
+* `GET /api/v2/datasets`
+* `POST /api/v2/recordings`
 
----
+### Audio Processing & Detection APIs
+* `POST /api/v2/audio/process` (Generate spectrograms)
+* `POST /api/v2/detection/cough` (Trigger ResNet-18 detector)
 
-# 13. Dashboard APIs
+### Temporal Intelligence APIs
+* `POST /api/v2/temporal/analyze` (Trigger Temporal Transformer)
+* `GET /api/v2/temporal/{subject_id}` (Get 30-day trajectory)
 
----
+### Environmental APIs
+* `POST /api/v2/environment/correlation` (Calculate AQI/weather impacts)
 
-## Dashboard Overview
-
-GET
-
-```http
-/api/v1/dashboard/overview
-```
-
-Response
-
-```json
-{
-  "recordings":102,
-  "events":342,
-  "subjects":24
-}
-```
+### Dashboard & Evaluation APIs
+* `GET /api/v2/dashboard/overview` (System metrics)
+* `GET /api/v2/evaluation/models` (AI performance metrics)
 
 ---
 
-## Analytics Dashboard
+# 5. Internal AI Service Flow (Conceptual)
 
-GET
-
-```http
-/api/v1/dashboard/analytics
-```
-
----
-
-## Trend Dashboard
-
-GET
-
-```http
-/api/v1/dashboard/trends
-```
-
----
-
-# 14. Evaluation APIs
-
----
-
-## Model Metrics
-
-GET
-
-```http
-/api/v1/evaluation/models
-```
-
-Response
-
-```json
-{
-  "cnn_accuracy":0.94,
-  "transformer_accuracy":0.89
-}
-```
-
----
-
-## Retrieval Metrics
-
-GET
-
-```http
-/api/v1/evaluation/retrieval
-```
-
----
-
-# 15. Internal AI Service Flow
+Even when running in a monolithic or script-based context, the internal data flow mirrors the API design:
 
 ```text
 Recording Uploaded
        │
        ▼
-Audio Processing API
+Audio Processor (Mel Spectrogram)
        │
        ▼
-Detection API
+ResNet-18 Detection
        │
        ▼
-Event Storage
+Temporal Transformer
        │
        ▼
-Temporal API
-       │
-       ▼
-Retrieval API
+Retrieval API (TurboVec)
        │
        ▼
 Insight API
 ```
 
----
-
-# 16. Future APIs
-
-Future versions may include:
-
-```text
-Patient APIs
-
-Authentication APIs
-
-Hospital Integration APIs
-
-Wearable Device APIs
-
-Realtime Streaming APIs
-```
-
----
-
-# API Summary
-
-PRISM exposes six major services:
-
-```text
-Dataset Service
-
-Recording Service
-
-Detection Service
-
-Temporal Service
-
-Retrieval Service
-
-Insight Service
-```
-
-Together these APIs provide the communication backbone connecting:
-
-```text
-Frontend
-     │
-     ▼
-FastAPI
-     │
-     ▼
-AI Models
-     │
-     ▼
-Database
-     │
-     ▼
-RATM Engine
-```
-
-while remaining modular, scalable, and compatible with future healthcare deployments.
+This REST architecture ensures that PRISM remains modular, scalable, and compatible with future healthcare deployments such as mobile apps, wearable backends, or hospital EMR integrations.
